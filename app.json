@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "LeanBulk Tracker",
+    "slug": "leanbulk-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F2F5F8"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mubaris.leanbulktracker",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F2F5F8"
+      },
+      "package": "com.mubaris.leanbulktracker"
+    },
+    "scheme": "leanbulk",
+    "web": {
+      "bundler": "metro"
+    },
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      "expo-router"
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+/node_modules
+/dist
+/dist-export-check
+.expo
+.expo-shared
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
+.vercel

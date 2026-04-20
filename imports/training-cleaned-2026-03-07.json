@@ -1,0 +1,500 @@
+{
+  "workouts": [
+    {
+      "date": "2026-03-01",
+      "type": "upper",
+      "notes": "Ramadan fasted workout",
+      "exercises": [
+        {
+          "name": "Incline Dumbbell Press",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 10
+            },
+            {
+              "weight": 14,
+              "reps": 8
+            },
+            {
+              "weight": 14,
+              "reps": 7
+            },
+            {
+              "weight": 14,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "name": "Machine Chest Press",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 25,
+              "reps": 10
+            },
+            {
+              "weight": 45,
+              "reps": 6
+            },
+            {
+              "weight": 45,
+              "reps": 6
+            },
+            {
+              "weight": 45,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "name": "Cable Fly",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 6.25,
+              "reps": 10
+            },
+            {
+              "weight": 11.25,
+              "reps": 7
+            },
+            {
+              "weight": 11.25,
+              "reps": 7
+            },
+            {
+              "weight": 11.25,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "name": "Dumbbell Lateral Raises",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 4,
+              "reps": 9
+            },
+            {
+              "weight": 6,
+              "reps": 7
+            },
+            {
+              "weight": 6,
+              "reps": 7
+            },
+            {
+              "weight": 6,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "name": "Seated Dumbbell Shoulder Press",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 12,
+              "reps": 6
+            },
+            {
+              "weight": 14,
+              "reps": 5
+            },
+            {
+              "weight": 14,
+              "reps": 5
+            },
+            {
+              "weight": 14,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "name": "Dumbbell Curls",
+          "category": "pull",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 7
+            },
+            {
+              "weight": 12,
+              "reps": 5
+            },
+            {
+              "weight": 12,
+              "reps": 5
+            },
+            {
+              "weight": 12,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "name": "Rope Pushdowns",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 8.75,
+              "reps": 10
+            },
+            {
+              "weight": 13.75,
+              "reps": 10
+            },
+            {
+              "weight": 13.75,
+              "reps": 9
+            },
+            {
+              "weight": 13.75,
+              "reps": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2026-03-03",
+      "type": "upper",
+      "notes": "Ramadan fasted workout",
+      "exercises": [
+        {
+          "name": "Incline Dumbbell Press",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 12,
+              "reps": 10
+            },
+            {
+              "weight": 16,
+              "reps": 10
+            },
+            {
+              "weight": 16,
+              "reps": 8
+            },
+            {
+              "weight": 16,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "name": "Machine Chest Press",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 9
+            },
+            {
+              "weight": 45,
+              "reps": 6
+            },
+            {
+              "weight": 45,
+              "reps": 6
+            },
+            {
+              "weight": 45,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "name": "Cable Fly",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 11.25,
+              "reps": 9
+            },
+            {
+              "weight": 13.75,
+              "reps": 6
+            },
+            {
+              "weight": 13.75,
+              "reps": 6
+            },
+            {
+              "weight": 13.75,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "name": "Dumbbell Lateral Raises",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 4,
+              "reps": 10
+            },
+            {
+              "weight": 4,
+              "reps": 12
+            },
+            {
+              "weight": 4,
+              "reps": 12
+            },
+            {
+              "weight": 6,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "name": "Seated Dumbbell Shoulder Press",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 12,
+              "reps": 8
+            },
+            {
+              "weight": 14,
+              "reps": 5
+            },
+            {
+              "weight": 14,
+              "reps": 5
+            },
+            {
+              "weight": 14,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "name": "Dumbbell Curls",
+          "category": "pull",
+          "sets": [
+            {
+              "weight": 8,
+              "reps": 11
+            },
+            {
+              "weight": 12,
+              "reps": 6
+            },
+            {
+              "weight": 12,
+              "reps": 6
+            },
+            {
+              "weight": 12,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "name": "Rope Pushdowns",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 8.75,
+              "reps": 15
+            },
+            {
+              "weight": 13.75,
+              "reps": 10
+            },
+            {
+              "weight": 13.75,
+              "reps": 9
+            },
+            {
+              "weight": 13.75,
+              "reps": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2026-03-05",
+      "type": "upper",
+      "notes": "Ramadan fasted workout",
+      "exercises": [
+        {
+          "name": "Incline Dumbbell Press",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 12,
+              "reps": 10
+            },
+            {
+              "weight": 16,
+              "reps": 7
+            },
+            {
+              "weight": 16,
+              "reps": 7
+            },
+            {
+              "weight": 16,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "name": "Machine Chest Press",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 10
+            },
+            {
+              "weight": 45,
+              "reps": 8
+            },
+            {
+              "weight": 45,
+              "reps": 7
+            },
+            {
+              "weight": 45,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "name": "Cable Fly",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 8.75,
+              "reps": 10
+            },
+            {
+              "weight": 11.25,
+              "reps": 10
+            },
+            {
+              "weight": 11.25,
+              "reps": 9
+            },
+            {
+              "weight": 11.25,
+              "reps": 9
+            }
+          ]
+        },
+        {
+          "name": "Dumbbell Lateral Raises",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 4,
+              "reps": 10
+            },
+            {
+              "weight": 4,
+              "reps": 9
+            },
+            {
+              "weight": 4,
+              "reps": 9
+            },
+            {
+              "weight": 4,
+              "reps": 9
+            }
+          ]
+        },
+        {
+          "name": "Seated Dumbbell Shoulder Press",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 12,
+              "reps": 8
+            },
+            {
+              "weight": 14,
+              "reps": 6
+            },
+            {
+              "weight": 14,
+              "reps": 6
+            },
+            {
+              "weight": 14,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "name": "Dumbbell Curls",
+          "category": "pull",
+          "sets": [
+            {
+              "weight": 8,
+              "reps": 9
+            },
+            {
+              "weight": 12,
+              "reps": 6
+            },
+            {
+              "weight": 10,
+              "reps": 8
+            },
+            {
+              "weight": 10,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "name": "Rope Pushdowns",
+          "category": "push",
+          "sets": [
+            {
+              "weight": 8.75,
+              "reps": 15
+            },
+            {
+              "weight": 13.75,
+              "reps": 11
+            },
+            {
+              "weight": 13.75,
+              "reps": 11
+            },
+            {
+              "weight": 13.75,
+              "reps": 8
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "nutrition": [
+    {
+      "date": "2026-03-01",
+      "bodyweightKg": null,
+      "caloriesTarget": null,
+      "caloriesConsumed": null,
+      "protein": null,
+      "carbs": null,
+      "fats": null,
+      "notes": "Nutrition not currently being tracked",
+      "proteinOnlyMode": false
+    }
+  ]
+}

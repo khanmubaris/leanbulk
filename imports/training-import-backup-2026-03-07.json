@@ -1,0 +1,815 @@
+{
+  "version": 1,
+  "exported_at": "2026-03-07T23:36:10.897Z",
+  "app_settings": [
+    {
+      "key": "ramadan_mode",
+      "value": "1"
+    },
+    {
+      "key": "unit_preference",
+      "value": "kg"
+    },
+    {
+      "key": "last_calories_target",
+      "value": "2800"
+    },
+    {
+      "key": "last_protein_target",
+      "value": "130"
+    },
+    {
+      "key": "last_carbs_target",
+      "value": "350"
+    },
+    {
+      "key": "last_fats_target",
+      "value": "80"
+    },
+    {
+      "key": "last_cloud_sync_at",
+      "value": ""
+    }
+  ],
+  "workout_sessions": [
+    {
+      "id": "session_import_001",
+      "date": "2026-03-01",
+      "type": "upper",
+      "notes": "Ramadan fasted workout",
+      "created_at": "2026-03-01T18:00:00.000Z",
+      "updated_at": "2026-03-01T18:00:00.000Z"
+    },
+    {
+      "id": "session_import_002",
+      "date": "2026-03-03",
+      "type": "upper",
+      "notes": "Ramadan fasted workout",
+      "created_at": "2026-03-03T18:00:00.000Z",
+      "updated_at": "2026-03-03T18:00:00.000Z"
+    },
+    {
+      "id": "session_import_003",
+      "date": "2026-03-05",
+      "type": "upper",
+      "notes": "Ramadan fasted workout",
+      "created_at": "2026-03-05T18:00:00.000Z",
+      "updated_at": "2026-03-05T18:00:00.000Z"
+    }
+  ],
+  "workout_exercises": [
+    {
+      "id": "exercise_import_0001",
+      "session_id": "session_import_001",
+      "name": "Incline Dumbbell Press",
+      "movement_category": "push",
+      "order_index": 0
+    },
+    {
+      "id": "exercise_import_0002",
+      "session_id": "session_import_001",
+      "name": "Machine Chest Press",
+      "movement_category": "push",
+      "order_index": 1
+    },
+    {
+      "id": "exercise_import_0003",
+      "session_id": "session_import_001",
+      "name": "Cable Fly",
+      "movement_category": "push",
+      "order_index": 2
+    },
+    {
+      "id": "exercise_import_0004",
+      "session_id": "session_import_001",
+      "name": "Dumbbell Lateral Raises",
+      "movement_category": "push",
+      "order_index": 3
+    },
+    {
+      "id": "exercise_import_0005",
+      "session_id": "session_import_001",
+      "name": "Seated Dumbbell Shoulder Press",
+      "movement_category": "push",
+      "order_index": 4
+    },
+    {
+      "id": "exercise_import_0006",
+      "session_id": "session_import_001",
+      "name": "Dumbbell Curls",
+      "movement_category": "pull",
+      "order_index": 5
+    },
+    {
+      "id": "exercise_import_0007",
+      "session_id": "session_import_001",
+      "name": "Rope Pushdowns",
+      "movement_category": "push",
+      "order_index": 6
+    },
+    {
+      "id": "exercise_import_0008",
+      "session_id": "session_import_002",
+      "name": "Incline Dumbbell Press",
+      "movement_category": "push",
+      "order_index": 0
+    },
+    {
+      "id": "exercise_import_0009",
+      "session_id": "session_import_002",
+      "name": "Machine Chest Press",
+      "movement_category": "push",
+      "order_index": 1
+    },
+    {
+      "id": "exercise_import_0010",
+      "session_id": "session_import_002",
+      "name": "Cable Fly",
+      "movement_category": "push",
+      "order_index": 2
+    },
+    {
+      "id": "exercise_import_0011",
+      "session_id": "session_import_002",
+      "name": "Dumbbell Lateral Raises",
+      "movement_category": "push",
+      "order_index": 3
+    },
+    {
+      "id": "exercise_import_0012",
+      "session_id": "session_import_002",
+      "name": "Seated Dumbbell Shoulder Press",
+      "movement_category": "push",
+      "order_index": 4
+    },
+    {
+      "id": "exercise_import_0013",
+      "session_id": "session_import_002",
+      "name": "Dumbbell Curls",
+      "movement_category": "pull",
+      "order_index": 5
+    },
+    {
+      "id": "exercise_import_0014",
+      "session_id": "session_import_002",
+      "name": "Rope Pushdowns",
+      "movement_category": "push",
+      "order_index": 6
+    },
+    {
+      "id": "exercise_import_0015",
+      "session_id": "session_import_003",
+      "name": "Incline Dumbbell Press",
+      "movement_category": "push",
+      "order_index": 0
+    },
+    {
+      "id": "exercise_import_0016",
+      "session_id": "session_import_003",
+      "name": "Machine Chest Press",
+      "movement_category": "push",
+      "order_index": 1
+    },
+    {
+      "id": "exercise_import_0017",
+      "session_id": "session_import_003",
+      "name": "Cable Fly",
+      "movement_category": "push",
+      "order_index": 2
+    },
+    {
+      "id": "exercise_import_0018",
+      "session_id": "session_import_003",
+      "name": "Dumbbell Lateral Raises",
+      "movement_category": "push",
+      "order_index": 3
+    },
+    {
+      "id": "exercise_import_0019",
+      "session_id": "session_import_003",
+      "name": "Seated Dumbbell Shoulder Press",
+      "movement_category": "push",
+      "order_index": 4
+    },
+    {
+      "id": "exercise_import_0020",
+      "session_id": "session_import_003",
+      "name": "Dumbbell Curls",
+      "movement_category": "pull",
+      "order_index": 5
+    },
+    {
+      "id": "exercise_import_0021",
+      "session_id": "session_import_003",
+      "name": "Rope Pushdowns",
+      "movement_category": "push",
+      "order_index": 6
+    }
+  ],
+  "workout_sets": [
+    {
+      "id": "set_import_00001",
+      "exercise_id": "exercise_import_0001",
+      "set_index": 1,
+      "weight": 10,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00002",
+      "exercise_id": "exercise_import_0001",
+      "set_index": 2,
+      "weight": 14,
+      "reps": 8
+    },
+    {
+      "id": "set_import_00003",
+      "exercise_id": "exercise_import_0001",
+      "set_index": 3,
+      "weight": 14,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00004",
+      "exercise_id": "exercise_import_0001",
+      "set_index": 4,
+      "weight": 14,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00005",
+      "exercise_id": "exercise_import_0002",
+      "set_index": 1,
+      "weight": 25,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00006",
+      "exercise_id": "exercise_import_0002",
+      "set_index": 2,
+      "weight": 45,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00007",
+      "exercise_id": "exercise_import_0002",
+      "set_index": 3,
+      "weight": 45,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00008",
+      "exercise_id": "exercise_import_0002",
+      "set_index": 4,
+      "weight": 45,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00009",
+      "exercise_id": "exercise_import_0003",
+      "set_index": 1,
+      "weight": 6.25,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00010",
+      "exercise_id": "exercise_import_0003",
+      "set_index": 2,
+      "weight": 11.25,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00011",
+      "exercise_id": "exercise_import_0003",
+      "set_index": 3,
+      "weight": 11.25,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00012",
+      "exercise_id": "exercise_import_0003",
+      "set_index": 4,
+      "weight": 11.25,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00013",
+      "exercise_id": "exercise_import_0004",
+      "set_index": 1,
+      "weight": 4,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00014",
+      "exercise_id": "exercise_import_0004",
+      "set_index": 2,
+      "weight": 6,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00015",
+      "exercise_id": "exercise_import_0004",
+      "set_index": 3,
+      "weight": 6,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00016",
+      "exercise_id": "exercise_import_0004",
+      "set_index": 4,
+      "weight": 6,
+      "reps": 8
+    },
+    {
+      "id": "set_import_00017",
+      "exercise_id": "exercise_import_0005",
+      "set_index": 1,
+      "weight": 12,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00018",
+      "exercise_id": "exercise_import_0005",
+      "set_index": 2,
+      "weight": 14,
+      "reps": 5
+    },
+    {
+      "id": "set_import_00019",
+      "exercise_id": "exercise_import_0005",
+      "set_index": 3,
+      "weight": 14,
+      "reps": 5
+    },
+    {
+      "id": "set_import_00020",
+      "exercise_id": "exercise_import_0005",
+      "set_index": 4,
+      "weight": 14,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00021",
+      "exercise_id": "exercise_import_0006",
+      "set_index": 1,
+      "weight": 10,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00022",
+      "exercise_id": "exercise_import_0006",
+      "set_index": 2,
+      "weight": 12,
+      "reps": 5
+    },
+    {
+      "id": "set_import_00023",
+      "exercise_id": "exercise_import_0006",
+      "set_index": 3,
+      "weight": 12,
+      "reps": 5
+    },
+    {
+      "id": "set_import_00024",
+      "exercise_id": "exercise_import_0006",
+      "set_index": 4,
+      "weight": 12,
+      "reps": 5
+    },
+    {
+      "id": "set_import_00025",
+      "exercise_id": "exercise_import_0007",
+      "set_index": 1,
+      "weight": 8.75,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00026",
+      "exercise_id": "exercise_import_0007",
+      "set_index": 2,
+      "weight": 13.75,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00027",
+      "exercise_id": "exercise_import_0007",
+      "set_index": 3,
+      "weight": 13.75,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00028",
+      "exercise_id": "exercise_import_0007",
+      "set_index": 4,
+      "weight": 13.75,
+      "reps": 8
+    },
+    {
+      "id": "set_import_00029",
+      "exercise_id": "exercise_import_0008",
+      "set_index": 1,
+      "weight": 12,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00030",
+      "exercise_id": "exercise_import_0008",
+      "set_index": 2,
+      "weight": 16,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00031",
+      "exercise_id": "exercise_import_0008",
+      "set_index": 3,
+      "weight": 16,
+      "reps": 8
+    },
+    {
+      "id": "set_import_00032",
+      "exercise_id": "exercise_import_0008",
+      "set_index": 4,
+      "weight": 16,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00033",
+      "exercise_id": "exercise_import_0009",
+      "set_index": 1,
+      "weight": 35,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00034",
+      "exercise_id": "exercise_import_0009",
+      "set_index": 2,
+      "weight": 45,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00035",
+      "exercise_id": "exercise_import_0009",
+      "set_index": 3,
+      "weight": 45,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00036",
+      "exercise_id": "exercise_import_0009",
+      "set_index": 4,
+      "weight": 45,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00037",
+      "exercise_id": "exercise_import_0010",
+      "set_index": 1,
+      "weight": 11.25,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00038",
+      "exercise_id": "exercise_import_0010",
+      "set_index": 2,
+      "weight": 13.75,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00039",
+      "exercise_id": "exercise_import_0010",
+      "set_index": 3,
+      "weight": 13.75,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00040",
+      "exercise_id": "exercise_import_0010",
+      "set_index": 4,
+      "weight": 13.75,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00041",
+      "exercise_id": "exercise_import_0011",
+      "set_index": 1,
+      "weight": 4,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00042",
+      "exercise_id": "exercise_import_0011",
+      "set_index": 2,
+      "weight": 4,
+      "reps": 12
+    },
+    {
+      "id": "set_import_00043",
+      "exercise_id": "exercise_import_0011",
+      "set_index": 3,
+      "weight": 4,
+      "reps": 12
+    },
+    {
+      "id": "set_import_00044",
+      "exercise_id": "exercise_import_0011",
+      "set_index": 4,
+      "weight": 6,
+      "reps": 8
+    },
+    {
+      "id": "set_import_00045",
+      "exercise_id": "exercise_import_0012",
+      "set_index": 1,
+      "weight": 12,
+      "reps": 8
+    },
+    {
+      "id": "set_import_00046",
+      "exercise_id": "exercise_import_0012",
+      "set_index": 2,
+      "weight": 14,
+      "reps": 5
+    },
+    {
+      "id": "set_import_00047",
+      "exercise_id": "exercise_import_0012",
+      "set_index": 3,
+      "weight": 14,
+      "reps": 5
+    },
+    {
+      "id": "set_import_00048",
+      "exercise_id": "exercise_import_0012",
+      "set_index": 4,
+      "weight": 14,
+      "reps": 5
+    },
+    {
+      "id": "set_import_00049",
+      "exercise_id": "exercise_import_0013",
+      "set_index": 1,
+      "weight": 8,
+      "reps": 11
+    },
+    {
+      "id": "set_import_00050",
+      "exercise_id": "exercise_import_0013",
+      "set_index": 2,
+      "weight": 12,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00051",
+      "exercise_id": "exercise_import_0013",
+      "set_index": 3,
+      "weight": 12,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00052",
+      "exercise_id": "exercise_import_0013",
+      "set_index": 4,
+      "weight": 12,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00053",
+      "exercise_id": "exercise_import_0014",
+      "set_index": 1,
+      "weight": 8.75,
+      "reps": 15
+    },
+    {
+      "id": "set_import_00054",
+      "exercise_id": "exercise_import_0014",
+      "set_index": 2,
+      "weight": 13.75,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00055",
+      "exercise_id": "exercise_import_0014",
+      "set_index": 3,
+      "weight": 13.75,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00056",
+      "exercise_id": "exercise_import_0014",
+      "set_index": 4,
+      "weight": 13.75,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00057",
+      "exercise_id": "exercise_import_0015",
+      "set_index": 1,
+      "weight": 12,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00058",
+      "exercise_id": "exercise_import_0015",
+      "set_index": 2,
+      "weight": 16,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00059",
+      "exercise_id": "exercise_import_0015",
+      "set_index": 3,
+      "weight": 16,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00060",
+      "exercise_id": "exercise_import_0015",
+      "set_index": 4,
+      "weight": 16,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00061",
+      "exercise_id": "exercise_import_0016",
+      "set_index": 1,
+      "weight": 35,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00062",
+      "exercise_id": "exercise_import_0016",
+      "set_index": 2,
+      "weight": 45,
+      "reps": 8
+    },
+    {
+      "id": "set_import_00063",
+      "exercise_id": "exercise_import_0016",
+      "set_index": 3,
+      "weight": 45,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00064",
+      "exercise_id": "exercise_import_0016",
+      "set_index": 4,
+      "weight": 45,
+      "reps": 7
+    },
+    {
+      "id": "set_import_00065",
+      "exercise_id": "exercise_import_0017",
+      "set_index": 1,
+      "weight": 8.75,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00066",
+      "exercise_id": "exercise_import_0017",
+      "set_index": 2,
+      "weight": 11.25,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00067",
+      "exercise_id": "exercise_import_0017",
+      "set_index": 3,
+      "weight": 11.25,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00068",
+      "exercise_id": "exercise_import_0017",
+      "set_index": 4,
+      "weight": 11.25,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00069",
+      "exercise_id": "exercise_import_0018",
+      "set_index": 1,
+      "weight": 4,
+      "reps": 10
+    },
+    {
+      "id": "set_import_00070",
+      "exercise_id": "exercise_import_0018",
+      "set_index": 2,
+      "weight": 4,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00071",
+      "exercise_id": "exercise_import_0018",
+      "set_index": 3,
+      "weight": 4,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00072",
+      "exercise_id": "exercise_import_0018",
+      "set_index": 4,
+      "weight": 4,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00073",
+      "exercise_id": "exercise_import_0019",
+      "set_index": 1,
+      "weight": 12,
+      "reps": 8
+    },
+    {
+      "id": "set_import_00074",
+      "exercise_id": "exercise_import_0019",
+      "set_index": 2,
+      "weight": 14,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00075",
+      "exercise_id": "exercise_import_0019",
+      "set_index": 3,
+      "weight": 14,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00076",
+      "exercise_id": "exercise_import_0019",
+      "set_index": 4,
+      "weight": 14,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00077",
+      "exercise_id": "exercise_import_0020",
+      "set_index": 1,
+      "weight": 8,
+      "reps": 9
+    },
+    {
+      "id": "set_import_00078",
+      "exercise_id": "exercise_import_0020",
+      "set_index": 2,
+      "weight": 12,
+      "reps": 6
+    },
+    {
+      "id": "set_import_00079",
+      "exercise_id": "exercise_import_0020",
+      "set_index": 3,
+      "weight": 10,
+      "reps": 8
+    },
+    {
+      "id": "set_import_00080",
+      "exercise_id": "exercise_import_0020",
+      "set_index": 4,
+      "weight": 10,
+      "reps": 8
+    },
+    {
+      "id": "set_import_00081",
+      "exercise_id": "exercise_import_0021",
+      "set_index": 1,
+      "weight": 8.75,
+      "reps": 15
+    },
+    {
+      "id": "set_import_00082",
+      "exercise_id": "exercise_import_0021",
+      "set_index": 2,
+      "weight": 13.75,
+      "reps": 11
+    },
+    {
+      "id": "set_import_00083",
+      "exercise_id": "exercise_import_0021",
+      "set_index": 3,
+      "weight": 13.75,
+      "reps": 11
+    },
+    {
+      "id": "set_import_00084",
+      "exercise_id": "exercise_import_0021",
+      "set_index": 4,
+      "weight": 13.75,
+      "reps": 8
+    }
+  ],
+  "nutrition_entries": [
+    {
+      "id": "nutrition_import_001",
+      "date": "2026-03-01",
+      "bodyweight_kg": null,
+      "calories_target": null,
+      "calories_consumed": null,
+      "protein": null,
+      "carbs": null,
+      "fats": null,
+      "notes": "Nutrition not currently being tracked",
+      "protein_only_mode": 0,
+      "created_at": "2026-03-01T20:00:00.000Z",
+      "updated_at": "2026-03-01T20:00:00.000Z"
+    }
+  ]
+}
