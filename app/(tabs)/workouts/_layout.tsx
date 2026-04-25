@@ -1,11 +1,12 @@
 import { Stack } from 'expo-router';
 import { colors } from 'src/theme/colors';
+import { fonts } from 'src/theme/fonts';
 
 const stackOptions = {
   headerStyle: { backgroundColor: colors.surface },
   headerTitleStyle: {
     color: colors.textPrimary,
-    fontWeight: '800' as const,
+    fontFamily: fonts.bold,
     fontSize: 18,
   },
   headerTintColor: colors.primary,
@@ -21,3 +22,4 @@ export default function WorkoutsLayout() {
     </Stack>
   );
 }
+

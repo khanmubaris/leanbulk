@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 import { spacing } from '../theme/spacing';
 
 interface EmptyStateProps {
@@ -20,7 +21,7 @@ export const EmptyState = ({ title, description }: EmptyStateProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.borderStrong,
     borderStyle: 'dashed',
@@ -36,15 +37,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontFamily: fonts.bold,
     color: colors.textSecondary,
     textAlign: 'center',
   },
   description: {
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
     lineHeight: 20,
     textAlign: 'center',
   },
 });
+

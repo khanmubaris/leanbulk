@@ -10,24 +10,25 @@ export const Card = ({ style, ...props }: ViewProps) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.lg,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.35,
-        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 20,
       },
       android: {
-        elevation: 10,
+        elevation: 12,
       },
       web: {
         // @ts-ignore
-        boxShadow: '0px 6px 24px rgba(0,0,0,0.45)',
+        boxShadow: '0px 8px 32px rgba(0,0,0,0.5)',
       },
     }),
   },
 });
+

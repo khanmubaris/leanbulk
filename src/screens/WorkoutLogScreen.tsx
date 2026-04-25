@@ -85,7 +85,7 @@ export default function WorkoutLogScreen() {
       </Card>
 
       {loading ? (
-        <ActivityIndicator style={styles.loadingIndicator} />
+        <ActivityIndicator style={styles.loadingIndicator} color={colors.primary} />
       ) : null}
       <FlatList
         data={items}
@@ -100,19 +100,27 @@ export default function WorkoutLogScreen() {
           )
         }
         renderItem={({ item }) => {
+          const isUpper = item.type === 'upper';
           return (
             <Card style={styles.itemCard}>
               <Pressable
                 style={styles.itemPressable}
                 onPress={() => router.push(`/workouts/entry?sessionId=${item.id}`)}
               >
-                <View style={styles.itemHeader}>
-                  <Text style={styles.itemDate}>{formatDateForDisplay(item.date)}</Text>
-                  <Text style={styles.itemType}>{item.type.toUpperCase()}</Text>
+                <View style={styles.itemRow}>
+                  <View style={[styles.typeIcon, isUpper ? styles.typeIconUpper : styles.typeIconLower]}>
+                    <Text style={[styles.typeIconText, isUpper ? styles.typeIconTextUpper : styles.typeIconTextLower]}>
+                      {item.type[0].toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemTitle}>{item.type.toUpperCase()} Session</Text>
+                    <Text style={styles.itemMeta}>{item.exerciseCount} exercises · {item.totalSets} sets</Text>
+                  </View>
+                  <View style={styles.itemRight}>
+                    <Text style={styles.itemDate}>{formatDateForDisplay(item.date)}</Text>
+                  </View>
                 </View>
-                <Text style={styles.itemMeta}>
-                  {item.exerciseCount} exercises · {item.totalSets} sets
-                </Text>
                 {item.notes ? <Text style={styles.itemNotes}>{item.notes}</Text> : null}
               </Pressable>
               <AppButton
@@ -136,60 +144,85 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   controlsCard: {
-    gap: spacing.md,
-    marginBottom: spacing.md,
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   listContainer: {
     paddingBottom: spacing.xxl,
     gap: spacing.sm,
   },
   itemCard: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
+    padding: spacing.md,
   },
   itemPressable: {
     paddingBottom: spacing.sm,
   },
-  itemHeader: {
+  itemRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    gap: spacing.sm,
   },
-  itemDate: {
-    fontSize: 19,
+  typeIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typeIconUpper: {
+    backgroundColor: colors.primarySoft,
+  },
+  typeIconLower: {
+    backgroundColor: colors.accentSoft,
+  },
+  typeIconText: {
+    fontSize: 16,
+    fontFamily: fonts.black,
+  },
+  typeIconTextUpper: {
+    color: colors.primary,
+  },
+  typeIconTextLower: {
+    color: colors.accent,
+  },
+  itemInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  itemTitle: {
+    fontSize: 15,
     fontFamily: fonts.bold,
     color: colors.textPrimary,
     letterSpacing: -0.2,
   },
-  itemType: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: colors.primary,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    borderWidth: 1,
-    borderColor: colors.primarySoft,
-    backgroundColor: colors.primarySoft,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
   itemMeta: {
-    fontSize: 14,
+    fontSize: 12,
+    fontFamily: fonts.medium,
     color: colors.textMuted,
-    fontWeight: '500',
+  },
+  itemRight: {
+    alignItems: 'flex-end',
+  },
+  itemDate: {
+    fontSize: 12,
+    fontFamily: fonts.semiBold,
+    color: colors.textMuted,
   },
   itemNotes: {
     marginTop: spacing.sm,
     color: colors.textSecondary,
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: fonts.regular,
     lineHeight: 20,
+    paddingLeft: 52,
   },
   deleteButton: {
-    marginTop: spacing.md,
+    marginTop: spacing.xs,
     alignSelf: 'flex-start',
   },
   loadingIndicator: {
     marginTop: spacing.lg,
   },
 });
+

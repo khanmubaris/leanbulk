@@ -281,8 +281,10 @@ const templateToDraftExercise = async (template: ExerciseTemplate): Promise<Edit
     sets:
       lastSets.length > 0
         ? lastSets.slice(0, MAX_SETS_PER_EXERCISE).map((set) => ({
-            weight: String(set.weight),
-            reps: String(set.reps),
+            weight: '',
+            reps: '',
+            weightHint: String(set.weight),
+            repsHint: String(set.reps),
           }))
         : [{ weight: '', reps: '' }],
   };

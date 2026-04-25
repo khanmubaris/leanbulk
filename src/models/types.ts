@@ -41,6 +41,8 @@ export interface WorkoutLogItem extends WorkoutSession {
 export interface EditableSetDraft {
   weight: string;
   reps: string;
+  weightHint?: string;
+  repsHint?: string;
 }
 
 export interface EditableExerciseDraft {

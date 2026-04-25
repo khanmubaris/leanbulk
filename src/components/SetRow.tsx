@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
 import { AppButton } from './AppButton';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 import { spacing } from '../theme/spacing';
 
 interface SetRowProps {
@@ -16,6 +17,8 @@ interface SetRowProps {
   onSubmitWeight?: () => void;
   onSubmitReps?: () => void;
   repsReturnKeyType?: TextInputProps['returnKeyType'];
+  completed?: boolean;
+  onToggleComplete?: () => void;
 }
 
 export const SetRow = ({
@@ -30,13 +33,15 @@ export const SetRow = ({
   onSubmitWeight,
   onSubmitReps,
   repsReturnKeyType = 'next',
+  completed = false,
+  onToggleComplete,
 }: SetRowProps) => {
   return (
     <View style={styles.row}>
       <Text style={styles.setLabel}>Set {index + 1}</Text>
       <TextInput
         ref={weightInputRef}
-        style={styles.input}
+        style={[styles.input, completed && styles.inputDone]}
         value={weight}
         onChangeText={onChangeWeight}
         keyboardType="decimal-pad"
@@ -48,7 +53,7 @@ export const SetRow = ({
       />
       <TextInput
         ref={repsInputRef}
-        style={styles.input}
+        style={[styles.input, completed && styles.inputDone]}
         value={reps}
         onChangeText={onChangeReps}
         keyboardType="number-pad"
@@ -58,7 +63,15 @@ export const SetRow = ({
         blurOnSubmit={repsReturnKeyType === 'done'}
         onSubmitEditing={onSubmitReps}
       />
-      {onRemove ? (
+      {onToggleComplete ? (
+        <Pressable
+          style={[styles.checkBtn, completed && styles.checkBtnDone]}
+          onPress={onToggleComplete}
+          hitSlop={4}
+        >
+          <Text style={[styles.checkText, completed && styles.checkTextDone]}>✓</Text>
+        </Pressable>
+      ) : onRemove ? (
         <AppButton
           label="Del"
           onPress={onRemove}
@@ -79,27 +92,54 @@ const styles = StyleSheet.create({
   },
   setLabel: {
     color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: '700',
-    width: 40,
+    fontSize: 11,
+    fontFamily: fonts.bold,
+    width: 36,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   input: {
     flex: 1,
-    minHeight: 46,
-    borderRadius: 12,
+    minHeight: 44,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.borderStrong,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
     color: colors.textPrimary,
     backgroundColor: colors.surfaceElevated,
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontFamily: fonts.monoBold,
+    textAlign: 'center',
+  },
+  inputDone: {
+    borderColor: colors.primary,
+    opacity: 0.7,
   },
   removeButton: {
-    minWidth: 56,
-    minHeight: 46,
+    minWidth: 52,
+    minHeight: 44,
     paddingHorizontal: spacing.sm,
   },
+  checkBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: colors.borderStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkBtnDone: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
+  },
+  checkText: {
+    fontSize: 16,
+    color: colors.textMuted,
+    fontWeight: '700',
+  },
+  checkTextDone: {
+    color: colors.primary,
+  },
 });
+

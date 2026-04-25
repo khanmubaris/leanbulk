@@ -9,6 +9,7 @@ import WorkoutEntryScreen from '../screens/WorkoutEntryScreen';
 import InsightsScreen from '../screens/InsightsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 import { RootTabParamList, WorkoutStackParamList } from './types';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
@@ -27,29 +28,19 @@ const navigationTheme = {
 };
 
 const sharedStackOptions = {
-  headerStyle: {
-    backgroundColor: colors.surface,
-  },
-  headerTitleStyle: {
-    color: colors.textPrimary,
-    fontWeight: '800' as const,
-    fontSize: 18,
-  },
+  headerStyle: { backgroundColor: colors.surface },
+  headerTitleStyle: { color: colors.textPrimary, fontFamily: fonts.bold, fontSize: 18 },
   headerTintColor: colors.primary,
   headerShadowVisible: false,
-  contentStyle: {
-    backgroundColor: colors.background,
-  },
+  contentStyle: { backgroundColor: colors.background },
 };
 
-const WorkoutStackNavigator = () => {
-  return (
-    <WorkoutStack.Navigator screenOptions={sharedStackOptions}>
-      <WorkoutStack.Screen name="WorkoutLog" component={WorkoutLogScreen} options={{ title: 'Workout Log' }} />
-      <WorkoutStack.Screen name="WorkoutEntry" component={WorkoutEntryScreen} options={{ title: 'Session' }} />
-    </WorkoutStack.Navigator>
-  );
-};
+const WorkoutStackNavigator = () => (
+  <WorkoutStack.Navigator screenOptions={sharedStackOptions}>
+    <WorkoutStack.Screen name="WorkoutLog" component={WorkoutLogScreen} options={{ title: 'Workout Log' }} />
+    <WorkoutStack.Screen name="WorkoutEntry" component={WorkoutEntryScreen} options={{ title: 'Session' }} />
+  </WorkoutStack.Navigator>
+);
 
 export default function RootNavigator() {
   return (
@@ -66,25 +57,12 @@ export default function RootNavigator() {
               Insights: { active: 'stats-chart', inactive: 'stats-chart-outline' },
               Settings: { active: 'settings', inactive: 'settings-outline' },
             };
-
             const icons = iconByRoute[route.name as keyof RootTabParamList];
             const iconName = focused ? icons.active : icons.inactive;
             return <Ionicons name={iconName} size={focused ? size + 1 : size} color={color} />;
           },
-          tabBarLabelStyle: {
-            fontSize: 11,
-            fontWeight: '700',
-            letterSpacing: 0.2,
-            marginTop: -2,
-          },
-          tabBarStyle: {
-            height: 76,
-            paddingBottom: 14,
-            paddingTop: 10,
-            backgroundColor: colors.surface,
-            borderTopWidth: 1,
-            borderTopColor: colors.border,
-          },
+          tabBarLabelStyle: { fontSize: 10, fontFamily: fonts.bold, letterSpacing: 0.3, marginTop: -2 },
+          tabBarStyle: { height: 76, paddingBottom: 14, paddingTop: 10, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border },
         })}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
@@ -95,3 +73,4 @@ export default function RootNavigator() {
     </NavigationContainer>
   );
 }
+

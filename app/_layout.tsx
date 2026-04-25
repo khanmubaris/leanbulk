@@ -8,18 +8,21 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import {
   useFonts,
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  Inter_900Black,
-} from '@expo-google-fonts/inter';
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold,
+  DMSans_900Black,
+} from '@expo-google-fonts/dm-sans';
+import {
+  SpaceMono_400Regular,
+  SpaceMono_700Bold,
+} from '@expo-google-fonts/space-mono';
 import { AuthProvider } from 'src/backend/auth';
 import { AppRefreshProvider } from 'src/hooks/useAppRefresh';
 import { colors } from 'src/theme/colors';
 import { fonts } from 'src/theme/fonts';
 
-// Apply Inter as default font family for all Text components
 const defaultTextStyle = Text.defaultProps?.style;
 Text.defaultProps = Text.defaultProps ?? {};
 Text.defaultProps.style = [defaultTextStyle, { fontFamily: fonts.regular }];
@@ -39,11 +42,13 @@ const navigationTheme = {
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-    Inter_900Black,
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
+    DMSans_900Black,
+    SpaceMono_400Regular,
+    SpaceMono_700Bold,
   });
 
   React.useEffect(() => {
@@ -92,7 +97,7 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#080810',
+    backgroundColor: colors.background,
   },
   webContainer: {
     flex: 1,

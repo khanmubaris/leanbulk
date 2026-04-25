@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Svg, { Rect, Text as SvgText, Line } from 'react-native-svg';
+import Svg, { Circle as SvgCircle, Defs, LinearGradient, Stop, Path, Rect, Text as SvgText, Line, Polyline } from 'react-native-svg';
 import { useFocusEffect, useRouter } from 'expo-router';
 import {
   getExerciseProgressSeries,
@@ -21,6 +21,8 @@ import { useAuth } from '../backend/auth';
 import { Card } from '../components/Card';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { AppButton } from '../components/AppButton';
+import { VolumeDonut } from '../components/VolumeDonut';
+import { MuscleGroupIcon } from '../components/MuscleGroupIcon';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 import { spacing } from '../theme/spacing';
@@ -28,14 +30,12 @@ import { formatDateForDisplay, formatShortDay } from '../utils/date';
 import { kgToLbs } from '../utils/number';
 
 type SessionRangePreset = '3' | '10' | '20' | 'custom';
-type ProgressViewMode = 'chart' | 'table';
+type ProgressViewMode = 'line' | 'bar' | 'table';
 type ChartMetric = 'maxWeightKg' | 'totalLoadKg' | 'totalReps';
 
 const TARGET_WORKOUTS_PER_WEEK = 4;
 
-const formatInteger = (value: number): string => {
-  return Number.isFinite(value) ? Math.round(value).toString() : '0';
-};
+const formatInteger = (value: number): string => Number.isFinite(value) ? Math.round(value).toString() : '0';
 
 const adherenceLabel = (workoutCount: number): string => {
   const ratio = Math.min(1, workoutCount / TARGET_WORKOUTS_PER_WEEK);
@@ -44,39 +44,27 @@ const adherenceLabel = (workoutCount: number): string => {
 
 const metricLabel = (metric: ChartMetric): string => {
   switch (metric) {
-    case 'maxWeightKg':
-      return 'Top Weight';
-    case 'totalLoadKg':
-      return 'Total Load';
-    case 'totalReps':
-      return 'Total Reps';
-    default:
-      return 'Metric';
+    case 'maxWeightKg': return 'Top Weight';
+    case 'totalLoadKg': return 'Total Load';
+    case 'totalReps': return 'Total Reps';
+    default: return 'Metric';
   }
 };
 
 const metricValueForPoint = (point: ExerciseProgressPoint, metric: ChartMetric): number => {
   switch (metric) {
-    case 'maxWeightKg':
-      return point.maxWeightKg;
-    case 'totalLoadKg':
-      return point.totalLoadKg;
-    case 'totalReps':
-      return point.totalReps;
-    default:
-      return 0;
+    case 'maxWeightKg': return point.maxWeightKg;
+    case 'totalLoadKg': return point.totalLoadKg;
+    case 'totalReps': return point.totalReps;
+    default: return 0;
   }
 };
 
-const toPreferredWeight = (valueKg: number, unitPreference: UnitPreference): number => {
-  return unitPreference === 'kg' ? valueKg : kgToLbs(valueKg);
-};
+const toPreferredWeight = (valueKg: number, unitPreference: UnitPreference): number =>
+  unitPreference === 'kg' ? valueKg : kgToLbs(valueKg);
 
 const formatMetricValue = (value: number, metric: ChartMetric, unitPreference: UnitPreference): string => {
-  if (metric === 'totalReps') {
-    return `${formatInteger(value)} reps`;
-  }
-
+  if (metric === 'totalReps') return `${formatInteger(value)} reps`;
   const converted = toPreferredWeight(value, unitPreference);
   const suffix = unitPreference === 'kg' ? 'kg' : 'lbs';
   return `${converted.toFixed(1)} ${suffix}`;
@@ -88,54 +76,27 @@ const formatLoad = (kgValue: number, unitPreference: UnitPreference): string => 
   return `${converted.toFixed(1)} ${suffix}`;
 };
 
-const formatSyncLabel = (iso: string | null): string => {
-  if (!iso) {
-    return 'No sync metadata yet';
-  }
-
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) {
-    return 'Unknown';
-  }
-
-  return parsed.toLocaleString();
-};
-
 const AnimatedRect = Animated.createAnimatedComponent(Rect as any);
 
+// ─── Bar chart ───────────────────────────────────────────────────
 const BAR_WIDTH = 36;
 const BAR_GAP = 14;
 const CHART_H = 180;
 const LABEL_AREA = 44;
 
-function SvgBarChart({
-  points,
-  metric,
-  unitPreference,
-  maxValue,
-}: {
-  points: ExerciseProgressPoint[];
-  metric: ChartMetric;
-  unitPreference: UnitPreference;
-  maxValue: number;
+function SvgBarChart({ points, metric, unitPreference, maxValue }: {
+  points: ExerciseProgressPoint[]; metric: ChartMetric; unitPreference: UnitPreference; maxValue: number;
 }) {
   const anims = useRef<Animated.Value[]>([]);
-
   useEffect(() => {
     anims.current = points.map(() => new Animated.Value(0));
     const staggered = points.map((_, i) =>
-      Animated.timing(anims.current[i], {
-        toValue: 1,
-        duration: 500,
-        delay: i * 50,
-        useNativeDriver: false,
-      })
+      Animated.timing(anims.current[i], { toValue: 1, duration: 500, delay: i * 50, useNativeDriver: false })
     );
     Animated.parallel(staggered).start();
   }, [points]);
 
   if (!points.length) return null;
-
   const svgWidth = points.length * (BAR_WIDTH + BAR_GAP) + BAR_GAP;
   const svgHeight = CHART_H + LABEL_AREA;
 
@@ -148,47 +109,19 @@ function SvgBarChart({
           const fullBarH = Math.max(6, ratio * (CHART_H - 32));
           const x = BAR_GAP + i * (BAR_WIDTH + BAR_GAP);
           const anim = anims.current[i];
-
-          const barY = anim
-            ? anim.interpolate({ inputRange: [0, 1], outputRange: [CHART_H, CHART_H - fullBarH] })
-            : CHART_H - fullBarH;
-          const barH = anim
-            ? anim.interpolate({ inputRange: [0, 1], outputRange: [0, fullBarH] })
-            : fullBarH;
-
+          const barY = anim ? anim.interpolate({ inputRange: [0, 1], outputRange: [CHART_H, CHART_H - fullBarH] }) : CHART_H - fullBarH;
+          const barH = anim ? anim.interpolate({ inputRange: [0, 1], outputRange: [0, fullBarH] }) : fullBarH;
           return (
             <React.Fragment key={point.sessionId}>
               {anim ? (
-                <AnimatedRect
-                  x={x}
-                  y={barY as any}
-                  width={BAR_WIDTH}
-                  height={barH as any}
-                  rx={8}
-                  fill={colors.primary}
-                  opacity={0.9}
-                />
+                <AnimatedRect x={x} y={barY as any} width={BAR_WIDTH} height={barH as any} rx={6} fill={colors.primary} opacity={0.85} />
               ) : (
-                <Rect x={x} y={CHART_H - fullBarH} width={BAR_WIDTH} height={fullBarH} rx={8} fill={colors.primary} opacity={0.9} />
+                <Rect x={x} y={CHART_H - fullBarH} width={BAR_WIDTH} height={fullBarH} rx={6} fill={colors.primary} opacity={0.85} />
               )}
-              <SvgText
-                x={x + BAR_WIDTH / 2}
-                y={CHART_H - fullBarH - 8}
-                textAnchor="middle"
-                fill={colors.textSecondary}
-                fontSize={9}
-                fontWeight="700"
-              >
+              <SvgText x={x + BAR_WIDTH / 2} y={CHART_H - fullBarH - 8} textAnchor="middle" fill={colors.textSecondary} fontSize={9} fontWeight="700">
                 {formatMetricValue(value, metric, unitPreference)}
               </SvgText>
-              <SvgText
-                x={x + BAR_WIDTH / 2}
-                y={CHART_H + 18}
-                textAnchor="middle"
-                fill={colors.textMuted}
-                fontSize={10}
-                fontWeight="600"
-              >
+              <SvgText x={x + BAR_WIDTH / 2} y={CHART_H + 18} textAnchor="middle" fill={colors.textMuted} fontSize={10} fontWeight="600">
                 {formatShortDay(point.date)}
               </SvgText>
             </React.Fragment>
@@ -199,6 +132,124 @@ function SvgBarChart({
     </ScrollView>
   );
 }
+
+// ─── Line chart ──────────────────────────────────────────────────
+const LINE_CHART_H = 180;
+const LINE_CHART_PAD_TOP = 32;
+const LINE_CHART_PAD_BOTTOM = 44;
+const LINE_DOT_RADIUS = 5;
+const LINE_DOT_STROKE = 2.5;
+
+function SvgLineChart({ points, metric, unitPreference, maxValue }: {
+  points: ExerciseProgressPoint[]; metric: ChartMetric; unitPreference: UnitPreference; maxValue: number;
+}) {
+  if (points.length < 1) return null;
+
+  const minValue = points.reduce((min, p) => Math.min(min, metricValueForPoint(p, metric)), maxValue);
+  const range = maxValue - minValue;
+  const effectiveRange = range > 0 ? range : 1;
+
+  // Add 10% padding to top and bottom of value range
+  const paddedMin = minValue - effectiveRange * 0.1;
+  const paddedMax = maxValue + effectiveRange * 0.1;
+  const paddedRange = paddedMax - paddedMin;
+
+  const dotSpacing = points.length > 1 ? 60 : 100;
+  const svgWidth = Math.max(300, (points.length - 1) * dotSpacing + 80);
+  const svgHeight = LINE_CHART_H + LINE_CHART_PAD_BOTTOM;
+  const plotHeight = LINE_CHART_H - LINE_CHART_PAD_TOP;
+
+  const getX = (i: number) => 40 + i * dotSpacing;
+  const getY = (value: number) => {
+    const ratio = paddedRange > 0 ? (value - paddedMin) / paddedRange : 0.5;
+    return LINE_CHART_PAD_TOP + plotHeight * (1 - ratio);
+  };
+
+  // Build the polyline points string
+  const linePoints = points
+    .map((p, i) => `${getX(i)},${getY(metricValueForPoint(p, metric))}`)
+    .join(' ');
+
+  // Build the fill path (area under the line)
+  const firstX = getX(0);
+  const lastX = getX(points.length - 1);
+  const baseY = LINE_CHART_H;
+  let areaPath = `M ${firstX},${baseY}`;
+  points.forEach((p, i) => {
+    areaPath += ` L ${getX(i)},${getY(metricValueForPoint(p, metric))}`;
+  });
+  areaPath += ` L ${lastX},${baseY} Z`;
+
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.xs }}>
+      <Svg width={svgWidth} height={svgHeight}>
+        <Defs>
+          <LinearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={colors.primary} stopOpacity={0.25} />
+            <Stop offset="1" stopColor={colors.primary} stopOpacity={0.02} />
+          </LinearGradient>
+        </Defs>
+
+        {/* Horizontal grid lines */}
+        {[0.25, 0.5, 0.75].map((ratio) => {
+          const y = LINE_CHART_PAD_TOP + plotHeight * (1 - ratio);
+          return (
+            <Line key={ratio} x1={30} y1={y} x2={svgWidth - 10} y2={y}
+              stroke={colors.border} strokeWidth={0.5} strokeDasharray="4,4" />
+          );
+        })}
+
+        {/* Area fill */}
+        <Path d={areaPath} fill="url(#areaFill)" />
+
+        {/* Baseline */}
+        <Line x1={30} y1={LINE_CHART_H} x2={svgWidth - 10} y2={LINE_CHART_H}
+          stroke={colors.border} strokeWidth={1} />
+
+        {/* Connecting line */}
+        <Polyline
+          points={linePoints}
+          fill="none"
+          stroke={colors.primary}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* Dots + labels */}
+        {points.map((point, i) => {
+          const value = metricValueForPoint(point, metric);
+          const cx = getX(i);
+          const cy = getY(value);
+          return (
+            <React.Fragment key={point.sessionId}>
+              {/* Outer ring */}
+              <SvgCircle cx={cx} cy={cy} r={LINE_DOT_RADIUS + LINE_DOT_STROKE}
+                fill={colors.background} />
+              {/* Inner dot */}
+              <SvgCircle cx={cx} cy={cy} r={LINE_DOT_RADIUS}
+                fill={colors.primary} />
+
+              {/* Value label above dot */}
+              <SvgText x={cx} y={cy - 14} textAnchor="middle"
+                fill={colors.textSecondary} fontSize={9} fontWeight="700">
+                {formatMetricValue(value, metric, unitPreference)}
+              </SvgText>
+
+              {/* Date label below baseline */}
+              <SvgText x={cx} y={LINE_CHART_H + 18} textAnchor="middle"
+                fill={colors.textMuted} fontSize={10} fontWeight="600">
+                {formatShortDay(point.date)}
+              </SvgText>
+            </React.Fragment>
+          );
+        })}
+      </Svg>
+    </ScrollView>
+  );
+}
+
+// ─── Main screen ─────────────────────────────────────────────────
 
 export default function InsightsScreen() {
   const router = useRouter();
@@ -218,7 +269,7 @@ export default function InsightsScreen() {
   const [rangePreset, setRangePreset] = useState<SessionRangePreset>('10');
   const [customSessionCount, setCustomSessionCount] = useState('12');
 
-  const [viewMode, setViewMode] = useState<ProgressViewMode>('chart');
+  const [viewMode, setViewMode] = useState<ProgressViewMode>('line');
   const [chartMetric, setChartMetric] = useState<ChartMetric>('maxWeightKg');
 
   const [progressPoints, setProgressPoints] = useState<ExerciseProgressPoint[]>([]);
@@ -227,358 +278,187 @@ export default function InsightsScreen() {
 
   const loadSummary = useCallback(async () => {
     setPrimaryLoading(true);
-
     try {
       const [weekly, settings, lastSync] = await Promise.all([
-        getWeeklyInsights(7).catch((err) => {
-          console.warn('getWeeklyInsights failed:', err?.message ?? err);
-          return null;
-        }),
-        getSettings().catch((err) => {
-          console.warn('getSettings failed:', err?.message ?? err);
-          return null;
-        }),
-        getLastCloudSyncAt().catch((err) => {
-          console.warn('getLastCloudSyncAt failed:', err?.message ?? err);
-          return null;
-        }),
+        getWeeklyInsights(7).catch(() => null),
+        getSettings().catch(() => null),
+        getLastCloudSyncAt().catch(() => null),
       ]);
-
-      if (weekly !== null) {
-        setInsights(weekly);
-      }
-      if (settings !== null) {
-        setUnitPreference(settings.unitPreference);
-      }
-      // lastSync is string | null — always safe to set
+      if (weekly !== null) setInsights(weekly);
+      if (settings !== null) setUnitPreference(settings.unitPreference);
       setLastCloudSyncAt(lastSync ?? null);
-    } catch (err) {
-      console.warn('loadSummary unexpected error:', err);
-    } finally {
-      setPrimaryLoading(false);
-    }
+    } catch (err) { console.warn('loadSummary unexpected error:', err); }
+    finally { setPrimaryLoading(false); }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      void loadSummary();
-    }, [loadSummary, refreshToken, reloadTick])
-  );
+  useFocusEffect(useCallback(() => { void loadSummary(); }, [loadSummary, refreshToken, reloadTick]));
 
   useEffect(() => {
     let active = true;
-
     const loadExerciseNames = async () => {
       let names: string[] = [];
-
-      try {
-        names = await listRecordedExercisesByType(splitFilter);
-      } catch (err) {
-        console.warn('listRecordedExercisesByType failed:', err instanceof Error ? err.message : err);
-        names = [];
-      }
-
-      if (!active) {
-        return;
-      }
-
+      try { names = await listRecordedExercisesByType(splitFilter); } catch { names = []; }
+      if (!active) return;
       setExerciseNames(names);
-      setSelectedExercise((current) => {
-        if (current && names.includes(current)) {
-          return current;
-        }
-
-        return names[0] ?? '';
-      });
+      setSelectedExercise((current) => (current && names.includes(current)) ? current : names[0] ?? '');
     };
-
     void loadExerciseNames();
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [splitFilter, refreshToken, reloadTick]);
 
   const resolvedSessionLimit = useMemo(() => {
-    if (rangePreset === '3') {
-      return 3;
-    }
-
-    if (rangePreset === '10') {
-      return 10;
-    }
-
-    if (rangePreset === '20') {
-      return 20;
-    }
-
+    if (rangePreset === '3') return 3;
+    if (rangePreset === '10') return 10;
+    if (rangePreset === '20') return 20;
     const parsed = Number(customSessionCount);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
-      return null;
-    }
-
+    if (!Number.isInteger(parsed) || parsed <= 0) return null;
     return Math.min(parsed, 100);
   }, [rangePreset, customSessionCount]);
 
   useEffect(() => {
     let active = true;
-
     const loadSeries = async () => {
-      if (!selectedExercise || !resolvedSessionLimit) {
-        setProgressPoints([]);
-        return;
-      }
-
+      if (!selectedExercise || !resolvedSessionLimit) { setProgressPoints([]); return; }
       setProgressLoading(true);
-
       try {
-        const rows = await getExerciseProgressSeries({
-          workoutType: splitFilter,
-          exerciseName: selectedExercise,
-          sessionLimit: resolvedSessionLimit,
-        });
-
-        if (!active) {
-          return;
-        }
-
+        const rows = await getExerciseProgressSeries({ workoutType: splitFilter, exerciseName: selectedExercise, sessionLimit: resolvedSessionLimit });
+        if (!active) return;
         setProgressPoints(rows.slice().reverse());
-      } catch (err) {
-        console.warn('getExerciseProgressSeries failed:', err instanceof Error ? err.message : err);
-        if (active) {
-          setProgressPoints([]);
-        }
-      } finally {
-        if (active) {
-          setProgressLoading(false);
-        }
-      }
+      } catch { if (active) setProgressPoints([]); }
+      finally { if (active) setProgressLoading(false); }
     };
-
     void loadSeries();
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [selectedExercise, resolvedSessionLimit, splitFilter, refreshToken, reloadTick]);
 
   const topExerciseByLoad: WeeklyExerciseInsight | null = useMemo(() => {
-    if (!insights?.exerciseInsights.length) {
-      return null;
-    }
-
+    if (!insights?.exerciseInsights.length) return null;
     return [...insights.exerciseInsights].sort((a, b) => b.totalLoadKg - a.totalLoadKg)[0] ?? null;
   }, [insights?.exerciseInsights]);
 
   const chartMaxValue = useMemo(() => {
-    if (!progressPoints.length) {
-      return 0;
-    }
-
+    if (!progressPoints.length) return 0;
     return progressPoints.reduce((max, point) => Math.max(max, metricValueForPoint(point, chartMetric)), 0);
   }, [progressPoints, chartMetric]);
 
   const trendBadge = useMemo(() => {
-    if (progressPoints.length < 2) {
-      return null;
-    }
-
+    if (progressPoints.length < 2) return null;
     const first = metricValueForPoint(progressPoints[0], chartMetric);
     const latest = metricValueForPoint(progressPoints[progressPoints.length - 1], chartMetric);
     const delta = latest - first;
-
-    if (Math.abs(delta) < 0.0001) {
-      return {
-        label: 'Flat trend',
-        tone: 'neutral' as const,
-      };
-    }
-
+    if (Math.abs(delta) < 0.0001) return { label: 'Flat', tone: 'neutral' as const };
     const pct = Math.abs(first) > 0.0001 ? Math.round((Math.abs(delta) / Math.abs(first)) * 100) : null;
-    const directionLabel = delta > 0 ? 'Up' : 'Down';
-    const pctLabel = pct === null ? '' : ` · ${pct}%`;
-
-    return {
-      label: `${directionLabel}${pctLabel}`,
-      tone: delta > 0 ? ('up' as const) : ('down' as const),
-    };
+    const directionLabel = delta > 0 ? '↑' : '↓';
+    const pctLabel = pct === null ? '' : ` ${pct}%`;
+    return { label: `${directionLabel}${pctLabel}`, tone: delta > 0 ? ('up' as const) : ('down' as const) };
   }, [chartMetric, progressPoints]);
 
   const chartSummaryText = useMemo(() => {
-    if (progressPoints.length < 2) {
-      return 'Need at least 2 logged sessions to compute trend.';
-    }
-
+    if (progressPoints.length < 2) return 'Need at least 2 logged sessions to compute trend.';
     const first = metricValueForPoint(progressPoints[0], chartMetric);
     const latest = metricValueForPoint(progressPoints[progressPoints.length - 1], chartMetric);
     const delta = latest - first;
-
-    if (Math.abs(delta) < 0.0001) {
-      return `${metricLabel(chartMetric)} is stable across selected sessions.`;
-    }
-
+    if (Math.abs(delta) < 0.0001) return `${metricLabel(chartMetric)} is stable across selected sessions.`;
     const direction = delta > 0 ? 'up' : 'down';
-    const absDelta = Math.abs(delta);
-    return `${metricLabel(chartMetric)} is ${direction} by ${formatMetricValue(absDelta, chartMetric, unitPreference)} from first to latest.`;
+    return `${metricLabel(chartMetric)} is ${direction} by ${formatMetricValue(Math.abs(delta), chartMetric, unitPreference)} from first to latest.`;
   }, [chartMetric, progressPoints, unitPreference]);
 
-  const tableRows = useMemo(() => {
-    return [...progressPoints].reverse();
-  }, [progressPoints]);
+  const tableRows = useMemo(() => [...progressPoints].reverse(), [progressPoints]);
 
   const averageSetsPerSession = useMemo(() => {
-    if (!insights?.workoutCount) {
-      return 0;
-    }
-
+    if (!insights?.workoutCount) return 0;
     return insights.totalSetCount / insights.workoutCount;
   }, [insights?.totalSetCount, insights?.workoutCount]);
 
   const filteredExerciseNames = useMemo(() => {
     const normalized = exerciseQuery.trim().toLowerCase();
-
-    if (!normalized) {
-      return exerciseNames;
-    }
-
+    if (!normalized) return exerciseNames;
     return exerciseNames.filter((name) => name.toLowerCase().includes(normalized));
   }, [exerciseNames, exerciseQuery]);
 
   const adjustCustomSessionCount = (delta: number) => {
     const base = Number(customSessionCount);
     const current = Number.isInteger(base) && base > 0 ? base : 1;
-    const next = Math.max(1, Math.min(100, current + delta));
-    setCustomSessionCount(String(next));
+    setCustomSessionCount(String(Math.max(1, Math.min(100, current + delta))));
   };
 
-  const handleRetry = async () => {
-    refresh();
-    setReloadTick((prev) => prev + 1);
-  };
-
-  const cloudStatusMessage = useMemo(() => {
-    if (!isBackendConfigured) {
-      return 'Backend is not configured in this build.';
-    }
-
-    if (authLoading) {
-      return 'Connecting to cloud account...';
-    }
-
-    if (!session) {
-      return 'Signed out. Sign in from Settings to load cloud workouts.';
-    }
-
-    if ((insights?.workoutCount ?? 0) === 0) {
-      return 'Connected. No cloud workout sessions found yet.';
-    }
-
-    return `Connected as ${session.user.email ?? session.user.id}`;
-  }, [authLoading, insights?.workoutCount, isBackendConfigured, session]);
+  const isChartMode = viewMode === 'line' || viewMode === 'bar';
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Insights</Text>
       {insights ? (
-        <Text style={styles.subtitle}>
-          {formatDateForDisplay(insights.periodStart)} to {formatDateForDisplay(insights.periodEnd)}
-        </Text>
+        <Text style={styles.subtitle}>{formatDateForDisplay(insights.periodStart)} — {formatDateForDisplay(insights.periodEnd)}</Text>
       ) : null}
 
-
-      <Card style={styles.cardGap}>
-        <Text style={styles.sectionTitle}>Weekly overview</Text>
-        <View style={styles.metricsGrid}>
-          <View style={styles.metricTile}>
-            <Text style={styles.metricTileValue}>{insights?.workoutCount ?? 0}</Text>
-            <Text style={styles.metricTileLabel}>Sessions</Text>
-          </View>
-          <View style={styles.metricTile}>
-            <Text style={styles.metricTileValue}>{insights?.totalSetCount ?? 0}</Text>
-            <Text style={styles.metricTileLabel}>Total Sets</Text>
-          </View>
-          <View style={styles.metricTile}>
-            <Text style={styles.metricTileValue}>{averageSetsPerSession.toFixed(1)}</Text>
-            <Text style={styles.metricTileLabel}>Sets / Session</Text>
-          </View>
+      {/* Overview metrics */}
+      <Text style={styles.sectionLabel}>Overview</Text>
+      <View style={styles.metricsRow}>
+        <View style={styles.metricTile}>
+          <Text style={styles.metricValue}>{insights?.workoutCount ?? 0}</Text>
+          <Text style={styles.metricTileLabel}>Sessions</Text>
         </View>
-        <Text style={styles.metric}>Upper: {insights?.upperSessionCount ?? 0} · Lower: {insights?.lowerSessionCount ?? 0}</Text>
-        <Text style={styles.helperText}>{adherenceLabel(insights?.workoutCount ?? 0)}</Text>
-        {topExerciseByLoad ? (
-          <Text style={styles.helperText}>
-            Highest weekly workload: {topExerciseByLoad.exerciseName} ({formatLoad(topExerciseByLoad.totalLoadKg, unitPreference)})
-          </Text>
-        ) : null}
-      </Card>
+        <View style={styles.metricTile}>
+          <Text style={styles.metricValue}>{insights?.totalSetCount ?? 0}</Text>
+          <Text style={styles.metricTileLabel}>Total sets</Text>
+        </View>
+        <View style={styles.metricTile}>
+          <Text style={styles.metricValue}>{Math.round(averageSetsPerSession * 10) / 10}</Text>
+          <Text style={styles.metricTileLabel}>Sets/session</Text>
+        </View>
+      </View>
+      <Text style={styles.helperText}>{adherenceLabel(insights?.workoutCount ?? 0)}</Text>
 
+      {/* Volume distribution donut */}
+      {insights && (insights.upperSessionCount > 0 || insights.lowerSessionCount > 0) ? (
+        <Card style={styles.cardGap}>
+          <Text style={styles.cardTitle}>Split distribution</Text>
+          <VolumeDonut
+            segments={[
+              { label: 'Upper', value: insights.upperSessionCount, color: colors.primary },
+              { label: 'Lower', value: insights.lowerSessionCount, color: colors.accent },
+            ]}
+            centerValue={String(insights.workoutCount)}
+            centerLabel="sessions"
+            size={120}
+          />
+        </Card>
+      ) : null}
+
+      {/* Exercise progress */}
+      <Text style={styles.sectionLabel}>Exercise progress</Text>
       <Card style={styles.cardGap}>
-        <Text style={styles.sectionTitle}>Exercise progress</Text>
-
-        <Text style={styles.label}>Workout split</Text>
         <SegmentedControl
           value={splitFilter}
-          options={[
-            { label: 'Upper', value: 'upper' },
-            { label: 'Lower', value: 'lower' },
-          ]}
+          options={[{ label: 'Upper', value: 'upper' }, { label: 'Lower', value: 'lower' }]}
           onChange={(value) => setSplitFilter(value as WorkoutType)}
         />
 
-        <Text style={styles.label}>Session range</Text>
         <SegmentedControl
           value={rangePreset}
-          options={[
-            { label: 'Last 3', value: '3' },
-            { label: 'Last 10', value: '10' },
-            { label: 'Last 20', value: '20' },
-            { label: 'Picker', value: 'custom' },
-          ]}
+          options={[{ label: 'Last 3', value: '3' }, { label: 'Last 10', value: '10' }, { label: 'Last 20', value: '20' }, { label: 'Picker', value: 'custom' }]}
           onChange={(value) => setRangePreset(value as SessionRangePreset)}
         />
 
         {rangePreset === 'custom' ? (
           <View style={styles.customRangeRow}>
-            <Pressable onPress={() => adjustCustomSessionCount(-1)} style={styles.stepperButton}>
-              <Text style={styles.stepperLabel}>-</Text>
-            </Pressable>
-            <TextInput
-              style={styles.customInput}
-              keyboardType="number-pad"
-              value={customSessionCount}
-              onChangeText={setCustomSessionCount}
-              maxLength={3}
-            />
-            <Pressable onPress={() => adjustCustomSessionCount(1)} style={styles.stepperButton}>
-              <Text style={styles.stepperLabel}>+</Text>
-            </Pressable>
+            <Pressable onPress={() => adjustCustomSessionCount(-1)} style={styles.stepperButton}><Text style={styles.stepperLabel}>-</Text></Pressable>
+            <TextInput style={styles.customInput} keyboardType="number-pad" value={customSessionCount} onChangeText={setCustomSessionCount} maxLength={3} />
+            <Pressable onPress={() => adjustCustomSessionCount(1)} style={styles.stepperButton}><Text style={styles.stepperLabel}>+</Text></Pressable>
             <Text style={styles.helperText}>sessions</Text>
           </View>
         ) : null}
 
-        <Text style={styles.label}>Choose exercise</Text>
-        <TextInput
-          style={styles.searchInput}
-          value={exerciseQuery}
-          onChangeText={setExerciseQuery}
-          placeholder="Search recorded exercises"
-          placeholderTextColor={colors.textMuted}
-        />
-
+        {/* Exercise pills */}
         {filteredExerciseNames.length ? (
-          <View style={styles.exerciseListWrap}>
+          <View style={styles.exercisePillsWrap}>
             {filteredExerciseNames.map((exerciseName) => {
               const selected = exerciseName === selectedExercise;
-
               return (
-                <Pressable
-                  key={exerciseName}
-                  onPress={() => setSelectedExercise(exerciseName)}
-                  style={[styles.exerciseRow, selected ? styles.exerciseRowSelected : null]}
-                >
-                  <Text style={[styles.exerciseRowText, selected ? styles.exerciseRowTextSelected : null]}>
-                    {selected ? '✓ ' : ''}
-                    {exerciseName}
-                  </Text>
+                <Pressable key={exerciseName} onPress={() => setSelectedExercise(exerciseName)}
+                  style={[styles.exercisePill, selected && styles.exercisePillSelected]}>
+                  <MuscleGroupIcon exerciseName={exerciseName} size={18} style={{ marginRight: 6 }} />
+                  <Text style={[styles.exercisePillText, selected && styles.exercisePillTextSelected]}>{exerciseName}</Text>
                 </Pressable>
               );
             })}
@@ -592,54 +472,37 @@ export default function InsightsScreen() {
             <View style={styles.selectedExerciseHeader}>
               <Text style={styles.selectedExerciseTitle}>{selectedExercise}</Text>
               {trendBadge ? (
-                <View
-                  style={[
-                    styles.trendBadge,
-                    trendBadge.tone === 'up'
-                      ? styles.trendBadgeUp
-                      : trendBadge.tone === 'down'
-                        ? styles.trendBadgeDown
-                        : styles.trendBadgeNeutral,
-                  ]}
-                >
+                <View style={[styles.trendBadge, trendBadge.tone === 'up' ? styles.trendBadgeUp : trendBadge.tone === 'down' ? styles.trendBadgeDown : styles.trendBadgeNeutral]}>
                   <Text style={styles.trendBadgeText}>{trendBadge.label}</Text>
                 </View>
               ) : null}
             </View>
 
-            <SegmentedControl
-              value={viewMode}
+            {/* View mode: Line / Bar / Table */}
+            <SegmentedControl value={viewMode}
               options={[
-                { label: 'Chart', value: 'chart' },
+                { label: 'Line', value: 'line' },
+                { label: 'Bar', value: 'bar' },
                 { label: 'Table', value: 'table' },
               ]}
-              onChange={(value) => setViewMode(value as ProgressViewMode)}
-            />
+              onChange={(value) => setViewMode(value as ProgressViewMode)} />
 
-            {viewMode === 'chart' ? (
+            {/* Metric selector (shared by both chart types) */}
+            {isChartMode ? (
               <>
-                <SegmentedControl
-                  value={chartMetric}
-                  options={[
-                    { label: 'Top Weight', value: 'maxWeightKg' },
-                    { label: 'Total Load', value: 'totalLoadKg' },
-                    { label: 'Total Reps', value: 'totalReps' },
-                  ]}
-                  onChange={(value) => setChartMetric(value as ChartMetric)}
-                />
+                <SegmentedControl value={chartMetric}
+                  options={[{ label: 'Top Weight', value: 'maxWeightKg' }, { label: 'Total Load', value: 'totalLoadKg' }, { label: 'Reps', value: 'totalReps' }]}
+                  onChange={(value) => setChartMetric(value as ChartMetric)} />
+
                 {progressLoading ? (
-                  <View style={styles.loadingInline}>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                    <Text style={styles.helperText}>Loading chart...</Text>
-                  </View>
+                  <View style={styles.loadingInline}><ActivityIndicator size="small" color={colors.primary} /><Text style={styles.helperText}>Loading chart...</Text></View>
                 ) : progressPoints.length ? (
                   <>
-                    <SvgBarChart
-                      points={progressPoints}
-                      metric={chartMetric}
-                      unitPreference={unitPreference}
-                      maxValue={chartMaxValue}
-                    />
+                    {viewMode === 'line' ? (
+                      <SvgLineChart points={progressPoints} metric={chartMetric} unitPreference={unitPreference} maxValue={chartMaxValue} />
+                    ) : (
+                      <SvgBarChart points={progressPoints} metric={chartMetric} unitPreference={unitPreference} maxValue={chartMaxValue} />
+                    )}
                     <Text style={styles.helperText}>{chartSummaryText}</Text>
                   </>
                 ) : (
@@ -647,10 +510,7 @@ export default function InsightsScreen() {
                 )}
               </>
             ) : progressLoading ? (
-              <View style={styles.loadingInline}>
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={styles.helperText}>Loading table...</Text>
-              </View>
+              <View style={styles.loadingInline}><ActivityIndicator size="small" color={colors.primary} /><Text style={styles.helperText}>Loading table...</Text></View>
             ) : tableRows.length ? (
               <View style={styles.tableWrap}>
                 <View style={styles.tableHeader}>
@@ -663,9 +523,7 @@ export default function InsightsScreen() {
                   <View key={row.sessionId} style={styles.tableRow}>
                     <Text style={[styles.tableText, styles.tableColDate]}>{formatShortDay(row.date)}</Text>
                     <Text style={[styles.tableText, styles.tableColSmall]}>{row.setCount}</Text>
-                    <Text style={[styles.tableText, styles.tableColMetric]}>
-                      {formatMetricValue(row.maxWeightKg, 'maxWeightKg', unitPreference)}
-                    </Text>
+                    <Text style={[styles.tableText, styles.tableColMetric]}>{formatMetricValue(row.maxWeightKg, 'maxWeightKg', unitPreference)}</Text>
                     <Text style={[styles.tableText, styles.tableColMetric]}>{formatLoad(row.totalLoadKg, unitPreference)}</Text>
                   </View>
                 ))}
@@ -678,288 +536,49 @@ export default function InsightsScreen() {
       </Card>
 
       <Card>
-        <Text style={styles.sectionTitle}>How to read this</Text>
-        <Text style={styles.helperText}>
-          Keep set count consistent, then push top weight, total reps, or total load up over time for the same exercise.
-        </Text>
+        <Text style={styles.cardTitle}>How to read this</Text>
+        <Text style={styles.helperText}>Keep set count consistent, then push top weight, total reps, or total load up over time for the same exercise.</Text>
       </Card>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    gap: spacing.md,
-    backgroundColor: colors.background,
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: 36,
-    fontFamily: fonts.black,
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: 14,
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  cardGap: {
-    gap: spacing.sm,
-  },
-  sectionTitle: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontFamily: fonts.bold,
-    letterSpacing: 0.1,
-  },
-  label: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: spacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  metric: {
-    color: colors.textSecondary,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  helperText: {
-    color: colors.textMuted,
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  flexButton: {
-    flex: 1,
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  metricTile: {
-    flex: 1,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.surfaceElevated,
-    gap: 4,
-  },
-  metricTileValue: {
-    color: colors.textPrimary,
-    fontSize: 26,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  metricTileLabel: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  customRangeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  stepperButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepperLabel: {
-    color: colors.textPrimary,
-    fontSize: 22,
-    fontWeight: '700',
-    lineHeight: 24,
-  },
-  customInput: {
-    minWidth: 72,
-    height: 46,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceElevated,
-    color: colors.textPrimary,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '700',
-    paddingHorizontal: spacing.sm,
-  },
-  searchInput: {
-    minHeight: 50,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceElevated,
-    paddingHorizontal: spacing.lg,
-    color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  exerciseListWrap: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceElevated,
-    overflow: 'hidden',
-  },
-  exerciseRow: {
-    minHeight: 50,
-    paddingHorizontal: spacing.lg,
-    justifyContent: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  exerciseRowSelected: {
-    backgroundColor: colors.primarySoft,
-  },
-  exerciseRowText: {
-    color: colors.textSecondary,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  exerciseRowTextSelected: {
-    color: colors.primary,
-    fontWeight: '800',
-  },
-  selectedExerciseHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  selectedExerciseTitle: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: '800',
-    flex: 1,
-    letterSpacing: -0.2,
-  },
-  trendBadge: {
-    borderRadius: 999,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    borderWidth: 1,
-  },
-  trendBadgeUp: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
-  },
-  trendBadgeDown: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentSoft,
-  },
-  trendBadgeNeutral: {
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceElevated,
-  },
-  trendBadgeText: {
-    color: colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  loadingInline: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  chartRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-  },
-  chartItem: {
-    width: 94,
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  chartValue: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  chartTrack: {
-    height: 200,
-    width: 40,
-    justifyContent: 'flex-end',
-    backgroundColor: colors.primarySoft,
-    borderRadius: 999,
-    padding: 4,
-  },
-  chartBar: {
-    width: '100%',
-    borderRadius: 999,
-    backgroundColor: colors.primary,
-  },
-  chartDate: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  tableWrap: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    overflow: 'hidden',
-    backgroundColor: colors.surfaceElevated,
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  tableHeaderText: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    alignItems: 'center',
-  },
-  tableText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  tableColDate: {
-    flex: 1,
-  },
-  tableColSmall: {
-    width: 52,
-    textAlign: 'center',
-  },
-  tableColMetric: {
-    width: 98,
-    textAlign: 'right',
-  },
+  container: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm, backgroundColor: colors.background },
+  title: { color: colors.textPrimary, fontSize: 28, fontFamily: fonts.black, letterSpacing: -0.5 },
+  subtitle: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.medium, marginTop: -4 },
+  sectionLabel: { fontSize: 11, fontFamily: fonts.bold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1.2, marginTop: spacing.md, marginBottom: spacing.xs, paddingLeft: 2 },
+  cardGap: { gap: spacing.sm },
+  cardTitle: { color: colors.textPrimary, fontSize: 16, fontFamily: fonts.bold, marginBottom: spacing.xs },
+  helperText: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.regular, lineHeight: 18 },
+  metricsRow: { flexDirection: 'row', gap: spacing.sm },
+  metricTile: { flex: 1, backgroundColor: colors.surfaceElevated, borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingVertical: spacing.sm, paddingHorizontal: spacing.sm, alignItems: 'center', gap: 2 },
+  metricValue: { fontSize: 22, fontFamily: fonts.monoBold, color: colors.textPrimary, letterSpacing: -0.5 },
+  metricTileLabel: { fontSize: 10, fontFamily: fonts.bold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  customRangeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  stepperButton: { width: 44, height: 44, borderRadius: 10, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' },
+  stepperLabel: { color: colors.textPrimary, fontSize: 20, fontFamily: fonts.bold, lineHeight: 22 },
+  customInput: { minWidth: 64, height: 44, borderWidth: 1, borderColor: colors.borderStrong, borderRadius: 10, backgroundColor: colors.surfaceElevated, color: colors.textPrimary, textAlign: 'center', fontSize: 15, fontFamily: fonts.monoBold, paddingHorizontal: spacing.sm },
+  exercisePillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  exercisePill: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderStrong },
+  exercisePillSelected: { backgroundColor: colors.primarySoft, borderColor: 'rgba(0,232,159,0.25)' },
+  exercisePillText: { fontSize: 12, fontFamily: fonts.bold, color: colors.textSecondary },
+  exercisePillTextSelected: { color: colors.primary },
+  selectedExerciseHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.xs },
+  selectedExerciseTitle: { color: colors.textPrimary, fontSize: 17, fontFamily: fonts.black, flex: 1, letterSpacing: -0.2 },
+  trendBadge: { borderRadius: 99, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1 },
+  trendBadgeUp: { borderColor: 'rgba(0,232,159,0.25)', backgroundColor: colors.primarySoft },
+  trendBadgeDown: { borderColor: 'rgba(255,107,53,0.25)', backgroundColor: colors.accentSoft },
+  trendBadgeNeutral: { borderColor: colors.borderStrong, backgroundColor: colors.surfaceElevated },
+  trendBadgeText: { color: colors.textPrimary, fontSize: 12, fontFamily: fonts.bold },
+  loadingInline: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs },
+  tableWrap: { borderRadius: 12, borderWidth: 1, borderColor: colors.borderStrong, overflow: 'hidden', backgroundColor: colors.surfaceElevated },
+  tableHeader: { flexDirection: 'row', paddingVertical: spacing.sm, paddingHorizontal: spacing.md, backgroundColor: colors.background, borderBottomWidth: 1, borderBottomColor: colors.border },
+  tableHeaderText: { color: colors.textMuted, fontSize: 10, fontFamily: fonts.bold, textTransform: 'uppercase', letterSpacing: 0.6 },
+  tableRow: { flexDirection: 'row', paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border, alignItems: 'center' },
+  tableText: { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.semiBold },
+  tableColDate: { flex: 1 },
+  tableColSmall: { width: 48, textAlign: 'center' },
+  tableColMetric: { width: 90, textAlign: 'right' },
 });
+

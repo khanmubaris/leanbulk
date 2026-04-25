@@ -1,31 +1,34 @@
 export const colors = {
-  // Backgrounds
-  background: '#0D0D15',
-  surface: '#13131F',
-  surfaceElevated: '#1B1B2A',
+  // Backgrounds — deeper, richer darks
+  background: '#08080F',
+  surface: '#101019',
+  surfaceElevated: '#16161F',
+  surfaceHighlight: '#1C1C28',
 
-  // Text
-  textPrimary: '#EEEEFF',
+  // Text — slightly warmer whites
+  textPrimary: '#F0F0FF',
   textSecondary: '#A0A0C8',
-  textMuted: '#7070A0',
+  textMuted: '#606088',
 
-  // Borders
-  border: '#1E1E32',
-  borderStrong: '#2C2C44',
+  // Borders — subtler
+  border: 'rgba(255,255,255,0.06)',
+  borderStrong: 'rgba(255,255,255,0.10)',
 
   // Primary — electric mint green
-  primary: '#00E5A0',
+  primary: '#00E89F',
   primaryDark: '#00C484',
-  primarySoft: '#001A12',
+  primarySoft: 'rgba(0,232,159,0.10)',
+  primaryMid: 'rgba(0,232,159,0.25)',
 
   // Accent — hot orange
   accent: '#FF6B35',
-  accentSoft: '#1E0C06',
+  accentSoft: 'rgba(255,107,53,0.10)',
 
   // Danger — electric red
   danger: '#FF4545',
-  dangerSoft: '#1E0606',
+  dangerSoft: 'rgba(255,69,69,0.10)',
 
   // Special
   gold: '#FFD166',
 };
+

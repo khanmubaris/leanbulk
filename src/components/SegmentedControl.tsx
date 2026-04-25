@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 import { spacing } from '../theme/spacing';
 
 export interface SegmentOption {
@@ -47,38 +48,33 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-    padding: 4,
-    gap: 4,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceElevated,
+    padding: 3,
+    gap: 3,
   },
   segment: {
     flex: 1,
-    minHeight: 40,
-    paddingHorizontal: spacing.md,
-    borderRadius: 11,
+    minHeight: 36,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'transparent',
   },
   segmentSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
   },
   segmentPressed: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.surfaceHighlight,
   },
   segmentLabel: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontFamily: fonts.bold,
     color: colors.textMuted,
     textAlign: 'center',
   },
   segmentLabelSelected: {
-    color: '#060F0A',
-    fontWeight: '800',
+    color: colors.primary,
   },
 });
+

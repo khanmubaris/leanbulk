@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from 'src/theme/colors';
+import { fonts } from 'src/theme/fonts';
 
 type TabName = 'index' | 'workouts' | 'insights' | 'settings';
 
@@ -29,9 +30,9 @@ export default function TabLayout() {
           return <Ionicons name={focused ? icons.active : icons.inactive} size={isWeb ? size - 2 : focused ? size + 1 : size} color={color} />;
         },
         tabBarLabelStyle: {
-          fontSize: isWeb ? 13 : 11,
-          fontWeight: '700',
-          letterSpacing: 0.2,
+          fontSize: isWeb ? 13 : 10,
+          fontFamily: fonts.bold,
+          letterSpacing: 0.3,
           marginTop: isWeb ? 0 : -2,
         },
         tabBarStyle: isWeb
@@ -65,3 +66,4 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+

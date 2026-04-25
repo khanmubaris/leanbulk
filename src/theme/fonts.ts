@@ -1,7 +1,10 @@
 export const fonts = {
-  regular: 'Inter_400Regular',
-  medium: 'Inter_500Medium',
-  semiBold: 'Inter_600SemiBold',
-  bold: 'Inter_700Bold',
-  black: 'Inter_900Black',
+  regular: 'DMSans_400Regular',
+  medium: 'DMSans_500Medium',
+  semiBold: 'DMSans_600SemiBold',
+  bold: 'DMSans_700Bold',
+  black: 'DMSans_900Black',
+  mono: 'SpaceMono_400Regular',
+  monoBold: 'SpaceMono_700Bold',
 };
+

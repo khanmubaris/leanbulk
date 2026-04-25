@@ -26,7 +26,7 @@ export const AppButton = ({
   const scale = useRef(new Animated.Value(1)).current;
 
   const pressIn = () =>
-    Animated.spring(scale, { toValue: 0.95, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
+    Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
   const pressOut = () =>
     Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 4 }).start();
 
@@ -50,21 +50,21 @@ export const AppButton = ({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 52,
-    borderRadius: 14,
+    minHeight: 50,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     borderWidth: 1,
   },
   label: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: fonts.bold,
     letterSpacing: 0.3,
   },
   disabled: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
 });
 
@@ -75,11 +75,11 @@ const variantStyles: Record<ButtonVariant, ViewStyle> = {
   },
   secondary: {
     backgroundColor: colors.primarySoft,
-    borderColor: colors.primary,
+    borderColor: 'rgba(0,232,159,0.20)',
   },
   danger: {
     backgroundColor: colors.dangerSoft,
-    borderColor: colors.danger,
+    borderColor: 'rgba(255,69,69,0.20)',
   },
   ghost: {
     backgroundColor: colors.surfaceElevated,
@@ -93,3 +93,4 @@ const labelStyles: Record<ButtonVariant, { color: string }> = {
   danger: { color: colors.danger },
   ghost: { color: colors.textPrimary },
 };
+

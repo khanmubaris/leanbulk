@@ -13,26 +13,17 @@ export default function App() {
   React.useEffect(() => {
     const removeLegacyLocalDb = async () => {
       const base = FileSystem.documentDirectory;
-      if (!base) {
-        return;
-      }
-
+      if (!base) return;
       const sqliteDir = `${base}SQLite/`;
       const staleFiles = [
         `${sqliteDir}leanbulk_tracker.db`,
         `${sqliteDir}leanbulk_tracker.db-shm`,
         `${sqliteDir}leanbulk_tracker.db-wal`,
       ];
-
       for (const filePath of staleFiles) {
-        try {
-          await FileSystem.deleteAsync(filePath, { idempotent: true });
-        } catch {
-          // Ignore cleanup errors; app is cloud-only regardless.
-        }
+        try { await FileSystem.deleteAsync(filePath, { idempotent: true }); } catch {}
       }
     };
-
     removeLegacyLocalDb();
   }, []);
 
@@ -51,8 +42,6 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
+  root: { flex: 1, backgroundColor: colors.background },
 });
+

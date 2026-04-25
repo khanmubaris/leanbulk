@@ -1,6 +1,7 @@
 import React from 'react';
 import { KeyboardTypeOptions, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 import { spacing } from '../theme/spacing';
 
 interface FormFieldProps {
@@ -44,37 +45,39 @@ export const FormField = ({
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   label: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '700',
+    color: colors.textMuted,
+    fontSize: 11,
+    fontFamily: fonts.bold,
     marginBottom: spacing.xs,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 1,
   },
   input: {
-    minHeight: 50,
-    borderRadius: 14,
+    minHeight: 48,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.borderStrong,
     backgroundColor: colors.surfaceElevated,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: fonts.semiBold,
   },
   multilineInput: {
-    minHeight: 100,
+    minHeight: 90,
     textAlignVertical: 'top',
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
   },
   helper: {
     marginTop: spacing.xs,
     color: colors.textMuted,
     fontSize: 12,
+    fontFamily: fonts.regular,
     lineHeight: 18,
   },
 });
+
