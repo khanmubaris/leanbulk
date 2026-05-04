@@ -63,6 +63,28 @@ export interface AppSettings {
   unitPreference: UnitPreference;
 }
 
+export interface ProgressionSuggestion {
+  exerciseName: string;
+  currentWeightKg: number;
+  suggestedWeightKg: number;
+  currentTopReps: number;
+}
+
+export interface PersonalRecord {
+  exerciseName: string;
+  workoutType: WorkoutType;
+  weightKg: number;
+  reps: number;
+  date: string;
+}
+
+export interface WeeklyVolumeTrendPoint {
+  weekStart: string;
+  weekLabel: string;
+  totalLoadKg: number;
+  sessionCount: number;
+}
+
 export interface HomeSummary {
   todayDate: string;
   todayWorkoutCount: number;

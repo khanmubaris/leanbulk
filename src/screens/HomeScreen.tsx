@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { getHomeSummary, getWorkoutSessionById, listWorkoutSessions } from '../db/database';
-import { HomeSummary, WorkoutSessionWithExercises, WorkoutType } from '../models/types';
+import { getHomeSummary, getProgressionSuggestions, getWorkoutSessionById, getWorkoutStreak, listWorkoutSessions } from '../db/database';
+import { HomeSummary, ProgressionSuggestion, WorkoutSessionWithExercises, WorkoutType } from '../models/types';
 import { useAppRefresh } from '../hooks/useAppRefresh';
 import { useAuth } from '../backend/auth';
 import { addDays, formatDateForDisplay, todayDateKey } from '../utils/date';
@@ -65,6 +65,8 @@ export default function HomeScreen() {
   const [quickType, setQuickType] = useState<WorkoutType>('upper');
   const [weekDayMap, setWeekDayMap] = useState<Record<number, WorkoutType | null>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [streak, setStreak] = useState(0);
+  const [progressionTips, setProgressionTips] = useState<ProgressionSuggestion[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -145,6 +147,12 @@ export default function HomeScreen() {
         const loadDelta = latestTotals.loadKg - previousTotals.loadKg;
 
         setDeltaText(`${formatRepsDelta(repsDelta)} · ${formatLoadDelta(loadDelta)} vs prev ${nextSummary.lastWorkout.type.toUpperCase()}`);
+
+        try {
+          const [s, tips] = await Promise.all([getWorkoutStreak(), getProgressionSuggestions()]);
+          if (active) { setStreak(s); setProgressionTips(tips); }
+        } catch { /* non-critical */ }
+
         setIsLoading(false);
       };
 
@@ -348,7 +356,39 @@ export default function HomeScreen() {
             ? 'Target hit! Keep the momentum going.'
             : `${WEEKLY_TARGET - weeklyCount} more session${WEEKLY_TARGET - weeklyCount === 1 ? '' : 's'} to hit your target.`}
         </Text>
+        {streak > 0 ? (
+          <View style={styles.streakRow}>
+            <Text style={styles.streakIcon}>🔥</Text>
+            <Text style={styles.streakWeekText}>
+              {streak} week streak
+            </Text>
+          </View>
+        ) : null}
       </Card>
+
+      {/* Progression tips */}
+      {progressionTips.length > 0 ? (
+        <>
+          <Text style={styles.sectionLabel}>Next session tips</Text>
+          <Card style={styles.cardGap}>
+            {progressionTips.slice(0, 5).map((tip, idx) => (
+              <View key={tip.exerciseName} style={[styles.tipRow, idx > 0 && styles.tipRowBorder]}>
+                <View style={styles.tipLeft}>
+                  <Text style={styles.tipName}>{tip.exerciseName}</Text>
+                  <Text style={styles.tipSub}>
+                    {tip.currentWeightKg} kg × {tip.currentTopReps} reps last time
+                  </Text>
+                </View>
+                <View style={styles.tipRight}>
+                  <Text style={styles.tipArrow}>→</Text>
+                  <Text style={styles.tipTarget}>{tip.suggestedWeightKg} kg</Text>
+                </View>
+              </View>
+            ))}
+            <Text style={styles.helperText}>Based on your last session — try bumping the weight when you hit 8+ reps.</Text>
+          </Card>
+        </>
+      ) : null}
     </ScrollView>
   );
 }
@@ -582,5 +622,30 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     lineHeight: 18,
   },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: spacing.xs,
+  },
+  streakIcon: { fontSize: 16 },
+  streakWeekText: {
+    fontSize: 13,
+    fontFamily: fonts.bold,
+    color: colors.accent,
+  },
+  tipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+  },
+  tipRowBorder: { borderTopWidth: 1, borderTopColor: colors.border },
+  tipLeft: { flex: 1, gap: 2 },
+  tipName: { fontSize: 14, fontFamily: fonts.bold, color: colors.textPrimary },
+  tipSub: { fontSize: 11, fontFamily: fonts.semiBold, color: colors.textMuted },
+  tipRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  tipArrow: { fontSize: 16, color: colors.textMuted },
+  tipTarget: { fontSize: 16, fontFamily: fonts.monoBold, color: colors.primary },
 });
 

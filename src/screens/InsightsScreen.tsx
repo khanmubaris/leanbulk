@@ -5,15 +5,19 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import {
   getExerciseProgressSeries,
   getLastCloudSyncAt,
+  getPersonalRecords,
   getSettings,
   getWeeklyInsights,
+  getWeeklyVolumeTrend,
   listRecordedExercisesByType,
 } from '../db/database';
 import {
   ExerciseProgressPoint,
+  PersonalRecord,
   UnitPreference,
   WeeklyExerciseInsight,
   WeeklyInsights,
+  WeeklyVolumeTrendPoint,
   WorkoutType,
 } from '../models/types';
 import { useAppRefresh } from '../hooks/useAppRefresh';
@@ -252,6 +256,48 @@ function SvgLineChart({ points, metric, unitPreference, maxValue }: {
   );
 }
 
+// ─── Volume trend bar chart ───────────────────────────────────────
+function SvgVolumeBarChart({ points, unitPreference }: {
+  points: WeeklyVolumeTrendPoint[];
+  unitPreference: UnitPreference;
+}) {
+  if (!points.length) return null;
+  const maxLoad = Math.max(...points.map((p) => p.totalLoadKg), 1);
+  const svgWidth = points.length * (BAR_WIDTH + BAR_GAP) + BAR_GAP;
+  const svgHeight = CHART_H + LABEL_AREA;
+
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.xs }}>
+      <Svg width={svgWidth} height={svgHeight}>
+        {points.map((point, i) => {
+          const ratio = point.totalLoadKg > 0 ? point.totalLoadKg / maxLoad : 0;
+          const fullBarH = Math.max(point.totalLoadKg > 0 ? 6 : 0, ratio * (CHART_H - 32));
+          const x = BAR_GAP + i * (BAR_WIDTH + BAR_GAP);
+          const y = CHART_H - fullBarH;
+          const isCurrentWeek = i === points.length - 1;
+          const displayVal = toPreferredWeight(point.totalLoadKg, unitPreference);
+          const label = displayVal >= 10000
+            ? `${(displayVal / 1000).toFixed(1)}k`
+            : Math.round(displayVal).toString();
+          return (
+            <React.Fragment key={point.weekStart}>
+              <Rect x={x} y={y} width={BAR_WIDTH} height={fullBarH} rx={6}
+                fill={isCurrentWeek ? colors.primary : colors.primarySoft} opacity={0.9} />
+              {point.totalLoadKg > 0 ? (
+                <SvgText x={x + BAR_WIDTH / 2} y={y - 7} textAnchor="middle"
+                  fill={colors.textSecondary} fontSize={8} fontWeight="700">{label}</SvgText>
+              ) : null}
+              <SvgText x={x + BAR_WIDTH / 2} y={CHART_H + 18} textAnchor="middle"
+                fill={colors.textMuted} fontSize={10} fontWeight="600">{point.weekLabel}</SvgText>
+            </React.Fragment>
+          );
+        })}
+        <Line x1={0} y1={CHART_H} x2={svgWidth} y2={CHART_H} stroke={colors.border} strokeWidth={1} />
+      </Svg>
+    </ScrollView>
+  );
+}
+
 // ─── Main screen ─────────────────────────────────────────────────
 
 export default function InsightsScreen() {
@@ -278,18 +324,24 @@ export default function InsightsScreen() {
   const [progressPoints, setProgressPoints] = useState<ExerciseProgressPoint[]>([]);
   const [progressLoading, setProgressLoading] = useState(false);
   const [reloadTick, setReloadTick] = useState(0);
+  const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([]);
+  const [volumeTrend, setVolumeTrend] = useState<WeeklyVolumeTrendPoint[]>([]);
 
   const loadSummary = useCallback(async () => {
     setPrimaryLoading(true);
     try {
-      const [weekly, settings, lastSync] = await Promise.all([
+      const [weekly, settings, lastSync, prs, trend] = await Promise.all([
         getWeeklyInsights(7).catch(() => null),
         getSettings().catch(() => null),
         getLastCloudSyncAt().catch(() => null),
+        getPersonalRecords().catch(() => []),
+        getWeeklyVolumeTrend(8).catch(() => []),
       ]);
       if (weekly !== null) setInsights(weekly);
       if (settings !== null) setUnitPreference(settings.unitPreference);
       setLastCloudSyncAt(lastSync ?? null);
+      setPersonalRecords(prs as PersonalRecord[]);
+      setVolumeTrend(trend as WeeklyVolumeTrendPoint[]);
     } catch (err) { console.warn('loadSummary unexpected error:', err); }
     finally { setPrimaryLoading(false); }
   }, []);
@@ -426,6 +478,42 @@ export default function InsightsScreen() {
             size={120}
           />
         </Card>
+      ) : null}
+
+      {/* Weekly volume trend */}
+      {volumeTrend.some((p) => p.totalLoadKg > 0) ? (
+        <>
+          <Text style={styles.sectionLabel}>Weekly volume</Text>
+          <Card style={styles.cardGap}>
+            <Text style={styles.cardTitle}>Load trend · last 8 weeks</Text>
+            <SvgVolumeBarChart points={volumeTrend} unitPreference={unitPreference} />
+            <Text style={styles.helperText}>
+              {unitPreference === 'kg' ? 'kg' : 'lbs'} lifted (weight × reps) per calendar week. Rightmost bar is this week.
+            </Text>
+          </Card>
+        </>
+      ) : null}
+
+      {/* PR Wall */}
+      {personalRecords.length > 0 ? (
+        <>
+          <Text style={styles.sectionLabel}>Personal records</Text>
+          <Card style={styles.cardGap}>
+            <Text style={styles.cardTitle}>All-time best sets</Text>
+            {personalRecords.map((pr, idx) => (
+              <View key={`${pr.exerciseName}-${pr.workoutType}`} style={[styles.prRow, idx > 0 && styles.prRowBorder]}>
+                <View style={styles.prLeft}>
+                  <Text style={styles.prName}>{pr.exerciseName}</Text>
+                  <Text style={styles.prMeta}>{pr.workoutType.toUpperCase()} · {formatDateForDisplay(pr.date)}</Text>
+                </View>
+                <View style={styles.prRight}>
+                  <Text style={styles.prWeight}>{toPreferredWeight(pr.weightKg, unitPreference).toFixed(1)} {unitPreference === 'kg' ? 'kg' : 'lbs'}</Text>
+                  <Text style={styles.prReps}>× {pr.reps}</Text>
+                </View>
+              </View>
+            ))}
+          </Card>
+        </>
       ) : null}
 
       {/* Exercise progress */}
@@ -587,5 +675,13 @@ const styles = StyleSheet.create({
   tableColDate: { flex: 1 },
   tableColSmall: { width: 48, textAlign: 'center' },
   tableColMetric: { width: 90, textAlign: 'right' },
+  prRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.sm },
+  prRowBorder: { borderTopWidth: 1, borderTopColor: colors.border },
+  prLeft: { flex: 1, gap: 2 },
+  prName: { fontSize: 14, fontFamily: fonts.bold, color: colors.textPrimary },
+  prMeta: { fontSize: 11, fontFamily: fonts.semiBold, color: colors.textMuted },
+  prRight: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  prWeight: { fontSize: 16, fontFamily: fonts.monoBold, color: colors.primary },
+  prReps: { fontSize: 13, fontFamily: fonts.semiBold, color: colors.textSecondary },
 });
 

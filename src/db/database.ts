@@ -3,9 +3,12 @@ import {
   EditableExerciseDraft,
   ExerciseProgressPoint,
   HomeSummary,
+  PersonalRecord,
+  ProgressionSuggestion,
   UnitPreference,
   WeeklyExerciseInsight,
   WeeklyInsights,
+  WeeklyVolumeTrendPoint,
   WorkoutCsvRow,
   WorkoutExerciseWithSets,
   WorkoutLogItem,
@@ -1315,6 +1318,234 @@ export const restoreDatabaseSnapshot = async (snapshot: DatabaseSnapshot): Promi
 
   if (settingsError) {
     throw new Error(settingsError.message);
+  }
+};
+
+const getWeekStart = (dateKey: string): string => {
+  const d = new Date(dateKey + 'T00:00:00Z');
+  const day = d.getUTCDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const monday = new Date(d.getTime() + diff * 86400000);
+  return monday.toISOString().slice(0, 10);
+};
+
+export const getWorkoutStreak = async (): Promise<number> => {
+  const userId = await getCurrentUserId();
+  if (!userId) return 0;
+
+  try {
+    const client = ensureClient();
+    const { data, error } = await client
+      .from('workout_sessions')
+      .select('date')
+      .eq('user_id', userId);
+
+    if (error) throw new Error(error.message);
+
+    const sessions = (data ?? []) as { date: string }[];
+    if (!sessions.length) return 0;
+
+    const weekSet = new Set(sessions.map((s) => getWeekStart(s.date)));
+    let weekStart = getWeekStart(todayDateKey());
+    let streak = 0;
+
+    if (!weekSet.has(weekStart)) {
+      weekStart = addDays(weekStart, -7);
+    }
+
+    while (weekSet.has(weekStart)) {
+      streak += 1;
+      weekStart = addDays(weekStart, -7);
+    }
+
+    return streak;
+  } catch {
+    return 0;
+  }
+};
+
+export const getPersonalRecords = async (): Promise<PersonalRecord[]> => {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  try {
+    const client = ensureClient();
+    const { data: sessionData, error: sessionError } = await client
+      .from('workout_sessions')
+      .select('id, date, type')
+      .eq('user_id', userId);
+
+    if (sessionError) throw new Error(sessionError.message);
+
+    const sessions = (sessionData ?? []) as { id: string; date: string; type: string }[];
+    if (!sessions.length) return [];
+
+    const sessionById = new Map(sessions.map((s) => [s.id, s]));
+    const sessionIds = sessions.map((s) => s.id);
+    const exercises = await fetchExercisesForSessions(userId, sessionIds);
+    const sets = await fetchSetsForExercises(userId, exercises.map((e) => e.id));
+
+    const exerciseById = new Map(exercises.map((e) => [e.id, e]));
+    const bests = new Map<string, PersonalRecord>();
+
+    for (const set of sets) {
+      const exercise = exerciseById.get(set.exercise_id);
+      if (!exercise) continue;
+      const session = sessionById.get(exercise.session_id);
+      if (!session) continue;
+
+      const weight = Number(set.weight);
+      const reps = Number(set.reps);
+      const workoutType = toWorkoutType(session.type);
+      const key = `${exercise.name.toLowerCase()}|${workoutType}`;
+      const existing = bests.get(key);
+
+      if (!existing || weight > existing.weightKg || (weight === existing.weightKg && reps > existing.reps)) {
+        bests.set(key, { exerciseName: exercise.name, workoutType, weightKg: weight, reps, date: session.date });
+      }
+    }
+
+    return Array.from(bests.values()).sort((a, b) => a.exerciseName.localeCompare(b.exerciseName));
+  } catch {
+    return [];
+  }
+};
+
+export const getWeeklyVolumeTrend = async (weeksBack = 8): Promise<WeeklyVolumeTrendPoint[]> => {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  try {
+    const today = todayDateKey();
+    const currentWeekStart = getWeekStart(today);
+    const rangeStart = addDays(currentWeekStart, -(weeksBack - 1) * 7);
+
+    const client = ensureClient();
+    const { data: sessionData, error: sessionError } = await client
+      .from('workout_sessions')
+      .select('id, date')
+      .eq('user_id', userId)
+      .gte('date', rangeStart)
+      .lte('date', today);
+
+    if (sessionError) throw new Error(sessionError.message);
+
+    const sessions = (sessionData ?? []) as { id: string; date: string }[];
+    const sessionIds = sessions.map((s) => s.id);
+    const exercises = await fetchExercisesForSessions(userId, sessionIds);
+    const sets = await fetchSetsForExercises(userId, exercises.map((e) => e.id));
+
+    const exerciseSessionId = new Map(exercises.map((e) => [e.id, e.session_id]));
+    const sessionDate = new Map(sessions.map((s) => [s.id, s.date]));
+    const loadByWeek = new Map<string, number>();
+    const sessionsByWeek = new Map<string, Set<string>>();
+
+    for (const set of sets) {
+      const sessionId = exerciseSessionId.get(set.exercise_id);
+      if (!sessionId) continue;
+      const date = sessionDate.get(sessionId);
+      if (!date) continue;
+      const week = getWeekStart(date);
+      loadByWeek.set(week, (loadByWeek.get(week) ?? 0) + Number(set.weight) * Number(set.reps));
+    }
+
+    for (const session of sessions) {
+      const week = getWeekStart(session.date);
+      const existing = sessionsByWeek.get(week) ?? new Set<string>();
+      existing.add(session.id);
+      sessionsByWeek.set(week, existing);
+    }
+
+    const points: WeeklyVolumeTrendPoint[] = [];
+    for (let i = weeksBack - 1; i >= 0; i--) {
+      const weekStart = addDays(currentWeekStart, -i * 7);
+      const d = new Date(weekStart + 'T00:00:00Z');
+      const weekLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+      points.push({
+        weekStart,
+        weekLabel,
+        totalLoadKg: loadByWeek.get(weekStart) ?? 0,
+        sessionCount: sessionsByWeek.get(weekStart)?.size ?? 0,
+      });
+    }
+
+    return points;
+  } catch {
+    return [];
+  }
+};
+
+export const getProgressionSuggestions = async (): Promise<ProgressionSuggestion[]> => {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  try {
+    const client = ensureClient();
+    const { data: sessionData, error: sessionError } = await client
+      .from('workout_sessions')
+      .select('id, date, type, notes, created_at, updated_at')
+      .eq('user_id', userId)
+      .order('date', { ascending: false })
+      .order('updated_at', { ascending: false })
+      .limit(30);
+
+    if (sessionError) throw new Error(sessionError.message);
+
+    const sessions = (sessionData ?? []) as SessionRow[];
+    if (!sessions.length) return [];
+
+    const sessionIds = sessions.map((s) => s.id);
+    const exercises = await fetchExercisesForSessions(userId, sessionIds);
+    const sets = await fetchSetsForExercises(userId, exercises.map((e) => e.id));
+
+    const setsByExercise = new Map<string, SetRow[]>();
+    for (const set of sets) {
+      const arr = setsByExercise.get(set.exercise_id) ?? [];
+      arr.push(set);
+      setsByExercise.set(set.exercise_id, arr);
+    }
+
+    const latestByName = new Map<string, { sessionIdx: number; exercise: ExerciseRow }>();
+    for (const exercise of exercises) {
+      const sessionIdx = sessions.findIndex((s) => s.id === exercise.session_id);
+      const existing = latestByName.get(exercise.name.toLowerCase());
+      if (!existing || sessionIdx < existing.sessionIdx) {
+        latestByName.set(exercise.name.toLowerCase(), { sessionIdx, exercise });
+      }
+    }
+
+    const suggestions: ProgressionSuggestion[] = [];
+
+    for (const [, { exercise }] of latestByName.entries()) {
+      const exerciseSets = setsByExercise.get(exercise.id) ?? [];
+      if (!exerciseSets.length) continue;
+
+      let maxWeight = 0;
+      for (const set of exerciseSets) {
+        maxWeight = Math.max(maxWeight, Number(set.weight));
+      }
+      if (maxWeight === 0) continue;
+
+      const repsAtMax = exerciseSets
+        .filter((s) => Number(s.weight) === maxWeight)
+        .map((s) => Number(s.reps));
+      const topReps = Math.max(...repsAtMax);
+
+      if (topReps >= 8) {
+        const increment = topReps >= 12 ? 5 : 2.5;
+        const suggested = Math.round((maxWeight + increment) * 2) / 2;
+        suggestions.push({
+          exerciseName: exercise.name,
+          currentWeightKg: maxWeight,
+          suggestedWeightKg: suggested,
+          currentTopReps: topReps,
+        });
+      }
+    }
+
+    return suggestions.sort((a, b) => a.exerciseName.localeCompare(b.exerciseName));
+  } catch {
+    return [];
   }
 };
 
