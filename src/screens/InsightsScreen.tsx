@@ -325,6 +325,7 @@ export default function InsightsScreen() {
   const [progressLoading, setProgressLoading] = useState(false);
   const [reloadTick, setReloadTick] = useState(0);
   const [activeTab, setActiveTab] = useState<InsightsTab>('week');
+  const [recordsFilter, setRecordsFilter] = useState<WorkoutType>('upper');
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([]);
   const [volumeTrend, setVolumeTrend] = useState<WeeklyVolumeTrendPoint[]>([]);
 
@@ -615,26 +616,31 @@ export default function InsightsScreen() {
 
       {/* ── Records tab ── */}
       {activeTab === 'records' ? (
-        personalRecords.length > 0 ? (
-          <Card style={styles.cardGap}>
-            <Text style={styles.cardTitle}>All-time best sets</Text>
-            <Text style={styles.helperText}>Best weight lifted for each exercise across all sessions.</Text>
-            {personalRecords.map((pr, idx) => (
-              <View key={`${pr.exerciseName}-${pr.workoutType}`} style={[styles.prRow, idx > 0 && styles.prRowBorder]}>
-                <View style={styles.prLeft}>
-                  <Text style={styles.prName}>{pr.exerciseName}</Text>
-                  <Text style={styles.prMeta}>{pr.workoutType.toUpperCase()} · {formatDateForDisplay(pr.date)}</Text>
+        <Card style={styles.cardGap}>
+          <SegmentedControl
+            value={recordsFilter}
+            options={[{ label: 'Upper', value: 'upper' }, { label: 'Lower', value: 'lower' }]}
+            onChange={(value) => setRecordsFilter(value as WorkoutType)}
+          />
+          {personalRecords.filter((pr) => pr.workoutType === recordsFilter).length > 0 ? (
+            personalRecords
+              .filter((pr) => pr.workoutType === recordsFilter)
+              .map((pr, idx, arr) => (
+                <View key={pr.exerciseName} style={[styles.prRow, idx > 0 && styles.prRowBorder]}>
+                  <View style={styles.prLeft}>
+                    <Text style={styles.prName}>{pr.exerciseName}</Text>
+                    <Text style={styles.prMeta}>{formatDateForDisplay(pr.date)}</Text>
+                  </View>
+                  <View style={styles.prRight}>
+                    <Text style={styles.prWeight}>{toPreferredWeight(pr.weightKg, unitPreference).toFixed(1)} {unitPreference === 'kg' ? 'kg' : 'lbs'}</Text>
+                    <Text style={styles.prReps}>× {pr.reps}</Text>
+                  </View>
                 </View>
-                <View style={styles.prRight}>
-                  <Text style={styles.prWeight}>{toPreferredWeight(pr.weightKg, unitPreference).toFixed(1)} {unitPreference === 'kg' ? 'kg' : 'lbs'}</Text>
-                  <Text style={styles.prReps}>× {pr.reps}</Text>
-                </View>
-              </View>
-            ))}
-          </Card>
-        ) : (
-          <Text style={styles.helperText}>No records yet. Log some sessions to see your bests here.</Text>
-        )
+              ))
+          ) : (
+            <Text style={styles.helperText}>No {recordsFilter} records yet.</Text>
+          )}
+        </Card>
       ) : null}
     </ScrollView>
   );
