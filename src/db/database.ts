@@ -1034,6 +1034,7 @@ export const getExerciseProgressSeries = async (input: {
     let totalLoadKg = 0;
     let maxWeightKg = 0;
     let weightSum = 0;
+    let estimatedOneRmKg = 0;
 
     for (const exercise of sessionExercises) {
       const rows = setsByExerciseId.get(exercise.id) ?? [];
@@ -1045,6 +1046,9 @@ export const getExerciseProgressSeries = async (input: {
         totalLoadKg += reps * weight;
         weightSum += weight;
         maxWeightKg = Math.max(maxWeightKg, weight);
+        if (reps >= 1 && reps < 15) {
+          estimatedOneRmKg = Math.max(estimatedOneRmKg, weight * (1 + reps / 30));
+        }
       }
     }
 
@@ -1057,6 +1061,7 @@ export const getExerciseProgressSeries = async (input: {
       totalLoadKg,
       maxWeightKg,
       averageWeightKg: setCount > 0 ? weightSum / setCount : 0,
+      estimatedOneRmKg,
     });
 
     if (points.length >= sessionLimit) {

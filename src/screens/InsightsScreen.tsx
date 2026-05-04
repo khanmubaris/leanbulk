@@ -31,7 +31,7 @@ import { kgToLbs } from '../utils/number';
 
 type SessionRangePreset = '3' | '10' | '20' | 'custom';
 type ProgressViewMode = 'line' | 'bar' | 'table';
-type ChartMetric = 'maxWeightKg' | 'totalLoadKg' | 'totalReps';
+type ChartMetric = 'maxWeightKg' | 'totalLoadKg' | 'totalReps' | 'estimatedOneRmKg';
 
 const TARGET_WORKOUTS_PER_WEEK = 4;
 
@@ -47,6 +47,7 @@ const metricLabel = (metric: ChartMetric): string => {
     case 'maxWeightKg': return 'Top Weight';
     case 'totalLoadKg': return 'Total Load';
     case 'totalReps': return 'Total Reps';
+    case 'estimatedOneRmKg': return 'Est. 1RM';
     default: return 'Metric';
   }
 };
@@ -56,6 +57,7 @@ const metricValueForPoint = (point: ExerciseProgressPoint, metric: ChartMetric):
     case 'maxWeightKg': return point.maxWeightKg;
     case 'totalLoadKg': return point.totalLoadKg;
     case 'totalReps': return point.totalReps;
+    case 'estimatedOneRmKg': return point.estimatedOneRmKg;
     default: return 0;
   }
 };
@@ -67,6 +69,7 @@ const formatMetricValue = (value: number, metric: ChartMetric, unitPreference: U
   if (metric === 'totalReps') return `${formatInteger(value)} reps`;
   const converted = toPreferredWeight(value, unitPreference);
   const suffix = unitPreference === 'kg' ? 'kg' : 'lbs';
+  if (metric === 'estimatedOneRmKg') return `${converted.toFixed(1)} ${suffix} (est.)`;
   return `${converted.toFixed(1)} ${suffix}`;
 };
 
@@ -491,7 +494,7 @@ export default function InsightsScreen() {
             {isChartMode ? (
               <>
                 <SegmentedControl value={chartMetric}
-                  options={[{ label: 'Top Weight', value: 'maxWeightKg' }, { label: 'Total Load', value: 'totalLoadKg' }, { label: 'Reps', value: 'totalReps' }]}
+                  options={[{ label: 'Top Weight', value: 'maxWeightKg' }, { label: 'Total Load', value: 'totalLoadKg' }, { label: 'Reps', value: 'totalReps' }, { label: 'Est. 1RM', value: 'estimatedOneRmKg' }]}
                   onChange={(value) => setChartMetric(value as ChartMetric)} />
 
                 {progressLoading ? (
@@ -512,22 +515,26 @@ export default function InsightsScreen() {
             ) : progressLoading ? (
               <View style={styles.loadingInline}><ActivityIndicator size="small" color={colors.primary} /><Text style={styles.helperText}>Loading table...</Text></View>
             ) : tableRows.length ? (
-              <View style={styles.tableWrap}>
-                <View style={styles.tableHeader}>
-                  <Text style={[styles.tableHeaderText, styles.tableColDate]}>Date</Text>
-                  <Text style={[styles.tableHeaderText, styles.tableColSmall]}>Sets</Text>
-                  <Text style={[styles.tableHeaderText, styles.tableColMetric]}>Top</Text>
-                  <Text style={[styles.tableHeaderText, styles.tableColMetric]}>Load</Text>
-                </View>
-                {tableRows.map((row) => (
-                  <View key={row.sessionId} style={styles.tableRow}>
-                    <Text style={[styles.tableText, styles.tableColDate]}>{formatShortDay(row.date)}</Text>
-                    <Text style={[styles.tableText, styles.tableColSmall]}>{row.setCount}</Text>
-                    <Text style={[styles.tableText, styles.tableColMetric]}>{formatMetricValue(row.maxWeightKg, 'maxWeightKg', unitPreference)}</Text>
-                    <Text style={[styles.tableText, styles.tableColMetric]}>{formatLoad(row.totalLoadKg, unitPreference)}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.tableWrap}>
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.tableHeaderText, styles.tableColDate]}>Date</Text>
+                    <Text style={[styles.tableHeaderText, styles.tableColSmall]}>Sets</Text>
+                    <Text style={[styles.tableHeaderText, styles.tableColMetric]}>Top</Text>
+                    <Text style={[styles.tableHeaderText, styles.tableColMetric]}>Load</Text>
+                    <Text style={[styles.tableHeaderText, styles.tableColMetric]}>Est. 1RM</Text>
                   </View>
-                ))}
-              </View>
+                  {tableRows.map((row) => (
+                    <View key={row.sessionId} style={styles.tableRow}>
+                      <Text style={[styles.tableText, styles.tableColDate]}>{formatShortDay(row.date)}</Text>
+                      <Text style={[styles.tableText, styles.tableColSmall]}>{row.setCount}</Text>
+                      <Text style={[styles.tableText, styles.tableColMetric]}>{formatMetricValue(row.maxWeightKg, 'maxWeightKg', unitPreference)}</Text>
+                      <Text style={[styles.tableText, styles.tableColMetric]}>{formatLoad(row.totalLoadKg, unitPreference)}</Text>
+                      <Text style={[styles.tableText, styles.tableColMetric]}>{formatMetricValue(row.estimatedOneRmKg, 'estimatedOneRmKg', unitPreference)}</Text>
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
             ) : (
               <Text style={styles.helperText}>No sessions found for this exercise in the selected range.</Text>
             )}

@@ -88,6 +88,7 @@ export interface ExerciseProgressPoint {
   totalLoadKg: number;
   maxWeightKg: number;
   averageWeightKg: number;
+  estimatedOneRmKg: number;
 }
 
 export interface WeeklyInsights {
