@@ -488,21 +488,22 @@ export default function InsightsScreen() {
             </Card>
           ) : null}
 
-          {volumeTrend.some((p) => p.totalLoadKg > 0) ? (
-            <Card style={styles.cardGap}>
-              <Text style={styles.cardTitle}>Volume trend · last 8 weeks</Text>
-              <SvgVolumeBarChart points={volumeTrend} unitPreference={unitPreference} />
-              <Text style={styles.helperText}>
-                Total {unitPreference === 'kg' ? 'kg' : 'lbs'} lifted per week. Rightmost bar is this week.
-              </Text>
-            </Card>
-          ) : null}
         </>
       ) : null}
 
       {/* ── Progress tab ── */}
       {activeTab === 'progress' ? (
         <Card style={styles.cardGap}>
+          {volumeTrend.some((p) => p.totalLoadKg > 0) ? (
+            <>
+              <Text style={styles.cardTitle}>Volume trend · last 8 weeks</Text>
+              <SvgVolumeBarChart points={volumeTrend} unitPreference={unitPreference} />
+              <Text style={styles.helperText}>
+                Total {unitPreference === 'kg' ? 'kg' : 'lbs'} lifted per week. Rightmost bar is this week.
+              </Text>
+              <View style={styles.divider} />
+            </>
+          ) : null}
           <SegmentedControl
             value={splitFilter}
             options={[{ label: 'Upper', value: 'upper' }, { label: 'Lower', value: 'lower' }]}
@@ -684,5 +685,6 @@ const styles = StyleSheet.create({
   prRight: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
   prWeight: { fontSize: 16, fontFamily: fonts.monoBold, color: colors.primary },
   prReps: { fontSize: 13, fontFamily: fonts.semiBold, color: colors.textSecondary },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.xs },
 });
 
