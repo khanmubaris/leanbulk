@@ -15,7 +15,6 @@ import {
   ExerciseProgressPoint,
   PersonalRecord,
   UnitPreference,
-  WeeklyExerciseInsight,
   WeeklyInsights,
   WeeklyVolumeTrendPoint,
   WorkoutType,
@@ -36,6 +35,7 @@ import { kgToLbs } from '../utils/number';
 type SessionRangePreset = '3' | '10' | '20' | 'custom';
 type ProgressViewMode = 'line' | 'bar' | 'table';
 type ChartMetric = 'maxWeightKg' | 'totalLoadKg' | 'totalReps' | 'estimatedOneRmKg';
+type InsightsTab = 'week' | 'progress' | 'records';
 
 const TARGET_WORKOUTS_PER_WEEK = 4;
 
@@ -324,6 +324,7 @@ export default function InsightsScreen() {
   const [progressPoints, setProgressPoints] = useState<ExerciseProgressPoint[]>([]);
   const [progressLoading, setProgressLoading] = useState(false);
   const [reloadTick, setReloadTick] = useState(0);
+  const [activeTab, setActiveTab] = useState<InsightsTab>('week');
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([]);
   const [volumeTrend, setVolumeTrend] = useState<WeeklyVolumeTrendPoint[]>([]);
 
@@ -386,11 +387,6 @@ export default function InsightsScreen() {
     return () => { active = false; };
   }, [selectedExercise, resolvedSessionLimit, splitFilter, refreshToken, reloadTick]);
 
-  const topExerciseByLoad: WeeklyExerciseInsight | null = useMemo(() => {
-    if (!insights?.exerciseInsights.length) return null;
-    return [...insights.exerciseInsights].sort((a, b) => b.totalLoadKg - a.totalLoadKg)[0] ?? null;
-  }, [insights?.exerciseInsights]);
-
   const chartMaxValue = useMemo(() => {
     if (!progressPoints.length) return 0;
     return progressPoints.reduce((max, point) => Math.max(max, metricValueForPoint(point, chartMetric)), 0);
@@ -442,64 +438,186 @@ export default function InsightsScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Insights</Text>
-      {insights ? (
-        <Text style={styles.subtitle}>{formatDateForDisplay(insights.periodStart)} — {formatDateForDisplay(insights.periodEnd)}</Text>
-      ) : null}
 
-      {/* Overview metrics */}
-      <Text style={styles.sectionLabel}>Overview</Text>
-      <View style={styles.metricsRow}>
-        <View style={styles.metricTile}>
-          <Text style={styles.metricValue}>{insights?.workoutCount ?? 0}</Text>
-          <Text style={styles.metricTileLabel}>Sessions</Text>
-        </View>
-        <View style={styles.metricTile}>
-          <Text style={styles.metricValue}>{insights?.totalSetCount ?? 0}</Text>
-          <Text style={styles.metricTileLabel}>Total sets</Text>
-        </View>
-        <View style={styles.metricTile}>
-          <Text style={styles.metricValue}>{Math.round(averageSetsPerSession * 10) / 10}</Text>
-          <Text style={styles.metricTileLabel}>Sets/session</Text>
-        </View>
-      </View>
-      <Text style={styles.helperText}>{adherenceLabel(insights?.workoutCount ?? 0)}</Text>
+      {/* Top-level tab switcher */}
+      <SegmentedControl
+        value={activeTab}
+        options={[
+          { label: 'This Week', value: 'week' },
+          { label: 'Progress', value: 'progress' },
+          { label: 'Records', value: 'records' },
+        ]}
+        onChange={(value) => setActiveTab(value as InsightsTab)}
+      />
 
-      {/* Volume distribution donut */}
-      {insights && (insights.upperSessionCount > 0 || insights.lowerSessionCount > 0) ? (
-        <Card style={styles.cardGap}>
-          <Text style={styles.cardTitle}>Split distribution</Text>
-          <VolumeDonut
-            segments={[
-              { label: 'Upper', value: insights.upperSessionCount, color: colors.primary },
-              { label: 'Lower', value: insights.lowerSessionCount, color: colors.accent },
-            ]}
-            centerValue={String(insights.workoutCount)}
-            centerLabel="sessions"
-            size={120}
-          />
-        </Card>
-      ) : null}
-
-      {/* Weekly volume trend */}
-      {volumeTrend.some((p) => p.totalLoadKg > 0) ? (
+      {/* ── This Week tab ── */}
+      {activeTab === 'week' ? (
         <>
-          <Text style={styles.sectionLabel}>Weekly volume</Text>
-          <Card style={styles.cardGap}>
-            <Text style={styles.cardTitle}>Load trend · last 8 weeks</Text>
-            <SvgVolumeBarChart points={volumeTrend} unitPreference={unitPreference} />
-            <Text style={styles.helperText}>
-              {unitPreference === 'kg' ? 'kg' : 'lbs'} lifted (weight × reps) per calendar week. Rightmost bar is this week.
-            </Text>
-          </Card>
+          {insights ? (
+            <Text style={styles.subtitle}>{formatDateForDisplay(insights.periodStart)} — {formatDateForDisplay(insights.periodEnd)}</Text>
+          ) : null}
+
+          <View style={styles.metricsRow}>
+            <View style={styles.metricTile}>
+              <Text style={styles.metricValue}>{insights?.workoutCount ?? 0}</Text>
+              <Text style={styles.metricTileLabel}>Sessions</Text>
+            </View>
+            <View style={styles.metricTile}>
+              <Text style={styles.metricValue}>{insights?.totalSetCount ?? 0}</Text>
+              <Text style={styles.metricTileLabel}>Total sets</Text>
+            </View>
+            <View style={styles.metricTile}>
+              <Text style={styles.metricValue}>{Math.round(averageSetsPerSession * 10) / 10}</Text>
+              <Text style={styles.metricTileLabel}>Sets/session</Text>
+            </View>
+          </View>
+          <Text style={styles.helperText}>{adherenceLabel(insights?.workoutCount ?? 0)}</Text>
+
+          {insights && (insights.upperSessionCount > 0 || insights.lowerSessionCount > 0) ? (
+            <Card style={styles.cardGap}>
+              <Text style={styles.cardTitle}>Split distribution</Text>
+              <VolumeDonut
+                segments={[
+                  { label: 'Upper', value: insights.upperSessionCount, color: colors.primary },
+                  { label: 'Lower', value: insights.lowerSessionCount, color: colors.accent },
+                ]}
+                centerValue={String(insights.workoutCount)}
+                centerLabel="sessions"
+                size={120}
+              />
+            </Card>
+          ) : null}
+
+          {volumeTrend.some((p) => p.totalLoadKg > 0) ? (
+            <Card style={styles.cardGap}>
+              <Text style={styles.cardTitle}>Volume trend · last 8 weeks</Text>
+              <SvgVolumeBarChart points={volumeTrend} unitPreference={unitPreference} />
+              <Text style={styles.helperText}>
+                Total {unitPreference === 'kg' ? 'kg' : 'lbs'} lifted per week. Rightmost bar is this week.
+              </Text>
+            </Card>
+          ) : null}
         </>
       ) : null}
 
-      {/* PR Wall */}
-      {personalRecords.length > 0 ? (
-        <>
-          <Text style={styles.sectionLabel}>Personal records</Text>
+      {/* ── Progress tab ── */}
+      {activeTab === 'progress' ? (
+        <Card style={styles.cardGap}>
+          <SegmentedControl
+            value={splitFilter}
+            options={[{ label: 'Upper', value: 'upper' }, { label: 'Lower', value: 'lower' }]}
+            onChange={(value) => setSplitFilter(value as WorkoutType)}
+          />
+
+          <SegmentedControl
+            value={rangePreset}
+            options={[{ label: 'Last 3', value: '3' }, { label: 'Last 10', value: '10' }, { label: 'Last 20', value: '20' }, { label: 'Picker', value: 'custom' }]}
+            onChange={(value) => setRangePreset(value as SessionRangePreset)}
+          />
+
+          {rangePreset === 'custom' ? (
+            <View style={styles.customRangeRow}>
+              <Pressable onPress={() => adjustCustomSessionCount(-1)} style={styles.stepperButton}><Text style={styles.stepperLabel}>-</Text></Pressable>
+              <TextInput style={styles.customInput} keyboardType="number-pad" value={customSessionCount} onChangeText={setCustomSessionCount} maxLength={3} />
+              <Pressable onPress={() => adjustCustomSessionCount(1)} style={styles.stepperButton}><Text style={styles.stepperLabel}>+</Text></Pressable>
+              <Text style={styles.helperText}>sessions</Text>
+            </View>
+          ) : null}
+
+          {filteredExerciseNames.length ? (
+            <View style={styles.exercisePillsWrap}>
+              {filteredExerciseNames.map((exerciseName) => {
+                const selected = exerciseName === selectedExercise;
+                return (
+                  <Pressable key={exerciseName} onPress={() => setSelectedExercise(exerciseName)}
+                    style={[styles.exercisePill, selected && styles.exercisePillSelected]}>
+                    <MuscleGroupIcon exerciseName={exerciseName} size={18} style={{ marginRight: 6 }} />
+                    <Text style={[styles.exercisePillText, selected && styles.exercisePillTextSelected]}>{exerciseName}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : (
+            <Text style={styles.helperText}>No recorded exercises for this split yet.</Text>
+          )}
+
+          {selectedExercise ? (
+            <>
+              <View style={styles.selectedExerciseHeader}>
+                <Text style={styles.selectedExerciseTitle}>{selectedExercise}</Text>
+                {trendBadge ? (
+                  <View style={[styles.trendBadge, trendBadge.tone === 'up' ? styles.trendBadgeUp : trendBadge.tone === 'down' ? styles.trendBadgeDown : styles.trendBadgeNeutral]}>
+                    <Text style={styles.trendBadgeText}>{trendBadge.label}</Text>
+                  </View>
+                ) : null}
+              </View>
+
+              <SegmentedControl value={viewMode}
+                options={[
+                  { label: 'Line', value: 'line' },
+                  { label: 'Bar', value: 'bar' },
+                  { label: 'Table', value: 'table' },
+                ]}
+                onChange={(value) => setViewMode(value as ProgressViewMode)} />
+
+              {isChartMode ? (
+                <>
+                  <SegmentedControl value={chartMetric}
+                    options={[{ label: 'Top Weight', value: 'maxWeightKg' }, { label: 'Total Load', value: 'totalLoadKg' }, { label: 'Reps', value: 'totalReps' }, { label: 'Est. 1RM', value: 'estimatedOneRmKg' }]}
+                    onChange={(value) => setChartMetric(value as ChartMetric)} />
+
+                  {progressLoading ? (
+                    <View style={styles.loadingInline}><ActivityIndicator size="small" color={colors.primary} /><Text style={styles.helperText}>Loading...</Text></View>
+                  ) : progressPoints.length ? (
+                    <>
+                      {viewMode === 'line' ? (
+                        <SvgLineChart points={progressPoints} metric={chartMetric} unitPreference={unitPreference} maxValue={chartMaxValue} />
+                      ) : (
+                        <SvgBarChart points={progressPoints} metric={chartMetric} unitPreference={unitPreference} maxValue={chartMaxValue} />
+                      )}
+                      <Text style={styles.helperText}>{chartSummaryText}</Text>
+                    </>
+                  ) : (
+                    <Text style={styles.helperText}>No sessions found for this exercise in the selected range.</Text>
+                  )}
+                </>
+              ) : progressLoading ? (
+                <View style={styles.loadingInline}><ActivityIndicator size="small" color={colors.primary} /><Text style={styles.helperText}>Loading...</Text></View>
+              ) : tableRows.length ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={styles.tableWrap}>
+                    <View style={styles.tableHeader}>
+                      <Text style={[styles.tableHeaderText, styles.tableColDate]}>Date</Text>
+                      <Text style={[styles.tableHeaderText, styles.tableColSmall]}>Sets</Text>
+                      <Text style={[styles.tableHeaderText, styles.tableColMetric]}>Top</Text>
+                      <Text style={[styles.tableHeaderText, styles.tableColMetric]}>Load</Text>
+                      <Text style={[styles.tableHeaderText, styles.tableColMetric]}>Est. 1RM</Text>
+                    </View>
+                    {tableRows.map((row) => (
+                      <View key={row.sessionId} style={styles.tableRow}>
+                        <Text style={[styles.tableText, styles.tableColDate]}>{formatShortDay(row.date)}</Text>
+                        <Text style={[styles.tableText, styles.tableColSmall]}>{row.setCount}</Text>
+                        <Text style={[styles.tableText, styles.tableColMetric]}>{formatMetricValue(row.maxWeightKg, 'maxWeightKg', unitPreference)}</Text>
+                        <Text style={[styles.tableText, styles.tableColMetric]}>{formatLoad(row.totalLoadKg, unitPreference)}</Text>
+                        <Text style={[styles.tableText, styles.tableColMetric]}>{formatMetricValue(row.estimatedOneRmKg, 'estimatedOneRmKg', unitPreference)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </ScrollView>
+              ) : (
+                <Text style={styles.helperText}>No sessions found for this exercise in the selected range.</Text>
+              )}
+            </>
+          ) : null}
+        </Card>
+      ) : null}
+
+      {/* ── Records tab ── */}
+      {activeTab === 'records' ? (
+        personalRecords.length > 0 ? (
           <Card style={styles.cardGap}>
             <Text style={styles.cardTitle}>All-time best sets</Text>
+            <Text style={styles.helperText}>Best weight lifted for each exercise across all sessions.</Text>
             {personalRecords.map((pr, idx) => (
               <View key={`${pr.exerciseName}-${pr.workoutType}`} style={[styles.prRow, idx > 0 && styles.prRowBorder]}>
                 <View style={styles.prLeft}>
@@ -513,127 +631,10 @@ export default function InsightsScreen() {
               </View>
             ))}
           </Card>
-        </>
-      ) : null}
-
-      {/* Exercise progress */}
-      <Text style={styles.sectionLabel}>Exercise progress</Text>
-      <Card style={styles.cardGap}>
-        <SegmentedControl
-          value={splitFilter}
-          options={[{ label: 'Upper', value: 'upper' }, { label: 'Lower', value: 'lower' }]}
-          onChange={(value) => setSplitFilter(value as WorkoutType)}
-        />
-
-        <SegmentedControl
-          value={rangePreset}
-          options={[{ label: 'Last 3', value: '3' }, { label: 'Last 10', value: '10' }, { label: 'Last 20', value: '20' }, { label: 'Picker', value: 'custom' }]}
-          onChange={(value) => setRangePreset(value as SessionRangePreset)}
-        />
-
-        {rangePreset === 'custom' ? (
-          <View style={styles.customRangeRow}>
-            <Pressable onPress={() => adjustCustomSessionCount(-1)} style={styles.stepperButton}><Text style={styles.stepperLabel}>-</Text></Pressable>
-            <TextInput style={styles.customInput} keyboardType="number-pad" value={customSessionCount} onChangeText={setCustomSessionCount} maxLength={3} />
-            <Pressable onPress={() => adjustCustomSessionCount(1)} style={styles.stepperButton}><Text style={styles.stepperLabel}>+</Text></Pressable>
-            <Text style={styles.helperText}>sessions</Text>
-          </View>
-        ) : null}
-
-        {/* Exercise pills */}
-        {filteredExerciseNames.length ? (
-          <View style={styles.exercisePillsWrap}>
-            {filteredExerciseNames.map((exerciseName) => {
-              const selected = exerciseName === selectedExercise;
-              return (
-                <Pressable key={exerciseName} onPress={() => setSelectedExercise(exerciseName)}
-                  style={[styles.exercisePill, selected && styles.exercisePillSelected]}>
-                  <MuscleGroupIcon exerciseName={exerciseName} size={18} style={{ marginRight: 6 }} />
-                  <Text style={[styles.exercisePillText, selected && styles.exercisePillTextSelected]}>{exerciseName}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
         ) : (
-          <Text style={styles.helperText}>No matching recorded exercises.</Text>
-        )}
-
-        {selectedExercise ? (
-          <>
-            <View style={styles.selectedExerciseHeader}>
-              <Text style={styles.selectedExerciseTitle}>{selectedExercise}</Text>
-              {trendBadge ? (
-                <View style={[styles.trendBadge, trendBadge.tone === 'up' ? styles.trendBadgeUp : trendBadge.tone === 'down' ? styles.trendBadgeDown : styles.trendBadgeNeutral]}>
-                  <Text style={styles.trendBadgeText}>{trendBadge.label}</Text>
-                </View>
-              ) : null}
-            </View>
-
-            {/* View mode: Line / Bar / Table */}
-            <SegmentedControl value={viewMode}
-              options={[
-                { label: 'Line', value: 'line' },
-                { label: 'Bar', value: 'bar' },
-                { label: 'Table', value: 'table' },
-              ]}
-              onChange={(value) => setViewMode(value as ProgressViewMode)} />
-
-            {/* Metric selector (shared by both chart types) */}
-            {isChartMode ? (
-              <>
-                <SegmentedControl value={chartMetric}
-                  options={[{ label: 'Top Weight', value: 'maxWeightKg' }, { label: 'Total Load', value: 'totalLoadKg' }, { label: 'Reps', value: 'totalReps' }, { label: 'Est. 1RM', value: 'estimatedOneRmKg' }]}
-                  onChange={(value) => setChartMetric(value as ChartMetric)} />
-
-                {progressLoading ? (
-                  <View style={styles.loadingInline}><ActivityIndicator size="small" color={colors.primary} /><Text style={styles.helperText}>Loading chart...</Text></View>
-                ) : progressPoints.length ? (
-                  <>
-                    {viewMode === 'line' ? (
-                      <SvgLineChart points={progressPoints} metric={chartMetric} unitPreference={unitPreference} maxValue={chartMaxValue} />
-                    ) : (
-                      <SvgBarChart points={progressPoints} metric={chartMetric} unitPreference={unitPreference} maxValue={chartMaxValue} />
-                    )}
-                    <Text style={styles.helperText}>{chartSummaryText}</Text>
-                  </>
-                ) : (
-                  <Text style={styles.helperText}>No sessions found for this exercise in the selected range.</Text>
-                )}
-              </>
-            ) : progressLoading ? (
-              <View style={styles.loadingInline}><ActivityIndicator size="small" color={colors.primary} /><Text style={styles.helperText}>Loading table...</Text></View>
-            ) : tableRows.length ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.tableWrap}>
-                  <View style={styles.tableHeader}>
-                    <Text style={[styles.tableHeaderText, styles.tableColDate]}>Date</Text>
-                    <Text style={[styles.tableHeaderText, styles.tableColSmall]}>Sets</Text>
-                    <Text style={[styles.tableHeaderText, styles.tableColMetric]}>Top</Text>
-                    <Text style={[styles.tableHeaderText, styles.tableColMetric]}>Load</Text>
-                    <Text style={[styles.tableHeaderText, styles.tableColMetric]}>Est. 1RM</Text>
-                  </View>
-                  {tableRows.map((row) => (
-                    <View key={row.sessionId} style={styles.tableRow}>
-                      <Text style={[styles.tableText, styles.tableColDate]}>{formatShortDay(row.date)}</Text>
-                      <Text style={[styles.tableText, styles.tableColSmall]}>{row.setCount}</Text>
-                      <Text style={[styles.tableText, styles.tableColMetric]}>{formatMetricValue(row.maxWeightKg, 'maxWeightKg', unitPreference)}</Text>
-                      <Text style={[styles.tableText, styles.tableColMetric]}>{formatLoad(row.totalLoadKg, unitPreference)}</Text>
-                      <Text style={[styles.tableText, styles.tableColMetric]}>{formatMetricValue(row.estimatedOneRmKg, 'estimatedOneRmKg', unitPreference)}</Text>
-                    </View>
-                  ))}
-                </View>
-              </ScrollView>
-            ) : (
-              <Text style={styles.helperText}>No sessions found for this exercise in the selected range.</Text>
-            )}
-          </>
-        ) : null}
-      </Card>
-
-      <Card>
-        <Text style={styles.cardTitle}>How to read this</Text>
-        <Text style={styles.helperText}>Keep set count consistent, then push top weight, total reps, or total load up over time for the same exercise.</Text>
-      </Card>
+          <Text style={styles.helperText}>No records yet. Log some sessions to see your bests here.</Text>
+        )
+      ) : null}
     </ScrollView>
   );
 }
