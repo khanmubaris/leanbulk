@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Share } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
+import * as ExpoSharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -18,6 +21,7 @@ import { SegmentedControl } from '../components/SegmentedControl';
 import { RestTimer } from '../components/RestTimer';
 import { MuscleGroupIcon } from '../components/MuscleGroupIcon';
 import { PRCelebration } from '../components/animations/PRCelebration';
+import { WorkoutShareCard } from '../components/WorkoutShareCard';
 import { useAppRefresh } from '../hooks/useAppRefresh';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -53,6 +57,8 @@ export default function WorkoutEntryScreen() {
   const [prCelebration, setPrCelebration] = useState<{ visible: boolean; exercise: string; metric: string }>({ visible: false, exercise: '', metric: '' });
   const [flashSavedKeys, setFlashSavedKeys] = useState<Set<string>>(new Set());
 
+  const shareCardRef = useRef<View>(null);
+  const [sharing, setSharing] = useState(false);
   const draftSessionIdRef = useRef<string | null>(null);
   const prevCompletedRef = useRef<Record<string, boolean>>({});
   const exercisesRef = useRef(exercises);
@@ -389,6 +395,25 @@ export default function WorkoutEntryScreen() {
     } finally { setSaving(false); }
   };
 
+  const handleShare = async () => {
+    if (!shareCardRef.current || sharing) return;
+    setSharing(true);
+    try {
+      const uri = await captureRef(shareCardRef, { format: 'png', quality: 1, result: 'tmpfile' });
+      const dest = `${FileSystem.cacheDirectory}workout-${Date.now()}.png`;
+      await FileSystem.moveAsync({ from: uri, to: dest });
+      if (await ExpoSharing.isAvailableAsync()) {
+        await ExpoSharing.shareAsync(dest, { mimeType: 'image/png', dialogTitle: 'Share workout' });
+      } else {
+        Alert.alert('Sharing not available', 'Your device does not support sharing files.');
+      }
+    } catch (err) {
+      Alert.alert('Share failed', err instanceof Error ? err.message : 'Could not create share image.');
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const handleDelete = () => {
     if (!existingSessionId) return;
     Alert.alert('Delete workout', 'This action cannot be undone.', [
@@ -647,11 +672,29 @@ export default function WorkoutEntryScreen() {
             disabled={isLastExercise || exercises.length === 0} />
           <AppButton label={saving ? 'Saving...' : 'Save Session'} onPress={handleSave} disabled={saving} style={styles.flex1} />
         </View>
-        {isEditing ? (
-          <Pressable onPress={handleDelete} style={styles.deleteTextButton}>
-            <Text style={styles.deleteText}>Delete Session</Text>
-          </Pressable>
-        ) : null}
+        <View style={styles.footerSecondaryRow}>
+          {(existingSessionId || draftSessionIdRef.current) ? (
+            <Pressable onPress={handleShare} disabled={sharing} style={styles.shareButton}>
+              <Text style={styles.shareButtonText}>{sharing ? 'Capturing...' : '↑ Share Workout'}</Text>
+            </Pressable>
+          ) : null}
+          {isEditing ? (
+            <Pressable onPress={handleDelete} style={styles.deleteTextButton}>
+              <Text style={styles.deleteText}>Delete Session</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+
+      {/* Off-screen share card */}
+      <View style={styles.offScreen} pointerEvents="none">
+        <WorkoutShareCard
+          ref={shareCardRef}
+          date={date}
+          type={type}
+          exercises={exercises}
+          totalSets={totalSets}
+        />
       </View>
 
       {/* PR Celebration overlay */}
@@ -741,5 +784,9 @@ const styles = StyleSheet.create({
   deleteText: { color: colors.danger, fontSize: 13, fontFamily: fonts.bold, letterSpacing: 0.2 },
   restTimerToggle: { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderStrong },
   restTimerToggleText: { fontSize: 13, fontFamily: fonts.bold, color: colors.textSecondary },
+  footerSecondaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  shareButton: { paddingVertical: 4 },
+  shareButtonText: { color: colors.primary, fontSize: 13, fontFamily: fonts.bold, letterSpacing: 0.2 },
+  offScreen: { position: 'absolute', top: -2000, left: 0, opacity: 0 },
 });
 

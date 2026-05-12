@@ -54,6 +54,14 @@ export const formatShortDay = (dateKey: string): string => {
   return `${monthNames[date.getMonth()]} ${date.getDate()}`;
 };
 
+export const getWeekStart = (dateKey: string): string => {
+  const date = parseDateKey(dateKey);
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + diff);
+  return formatDateKey(date);
+};
+
 export const fileTimestamp = (): string => {
   const now = new Date();
   return [

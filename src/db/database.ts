@@ -19,7 +19,7 @@ import {
   WorkoutType,
 } from '../models/types';
 import { ExerciseTemplate, getTemplateByType, MAX_SETS_PER_EXERCISE } from '../models/templates';
-import { addDays, isValidDateKey, todayDateKey } from '../utils/date';
+import { addDays, getWeekStart, isValidDateKey, todayDateKey } from '../utils/date';
 import { isSupabaseConfigured, supabase } from '../backend/supabase';
 
 const VALID_WORKOUT_TYPES: WorkoutType[] = ['upper', 'lower'];
@@ -1321,13 +1321,6 @@ export const restoreDatabaseSnapshot = async (snapshot: DatabaseSnapshot): Promi
   }
 };
 
-const getWeekStart = (dateKey: string): string => {
-  const d = new Date(dateKey + 'T00:00:00Z');
-  const day = d.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const monday = new Date(d.getTime() + diff * 86400000);
-  return monday.toISOString().slice(0, 10);
-};
 
 export const getWorkoutStreak = async (): Promise<number> => {
   const userId = await getCurrentUserId();
@@ -1544,6 +1537,29 @@ export const getProgressionSuggestions = async (): Promise<ProgressionSuggestion
     }
 
     return suggestions.sort((a, b) => a.exerciseName.localeCompare(b.exerciseName));
+  } catch {
+    return [];
+  }
+};
+
+export const getSessionHeatmapData = async (): Promise<{ date: string; type: WorkoutType }[]> => {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  try {
+    const rangeStart = addDays(todayDateKey(), -364);
+    const client = ensureClient();
+    const { data, error } = await client
+      .from('workout_sessions')
+      .select('date, type')
+      .eq('user_id', userId)
+      .gte('date', rangeStart);
+
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as { date: string; type: string }[]).map((row) => ({
+      date: row.date,
+      type: toWorkoutType(row.type),
+    }));
   } catch {
     return [];
   }

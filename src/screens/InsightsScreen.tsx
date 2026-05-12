@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Svg, { Circle as SvgCircle, Defs, LinearGradient, Stop, Path, Rect, Text as SvgText, Line, Polyline } from 'react-native-svg';
+import Svg, { Circle as SvgCircle, Defs, LinearGradient, Stop, Path, Polygon, Rect, Text as SvgText, Line, Polyline } from 'react-native-svg';
 import { useFocusEffect, useRouter } from 'expo-router';
 import {
   getExerciseProgressSeries,
   getLastCloudSyncAt,
   getPersonalRecords,
+  getSessionHeatmapData,
   getSettings,
   getWeeklyInsights,
   getWeeklyVolumeTrend,
@@ -29,8 +30,10 @@ import { MuscleGroupIcon } from '../components/MuscleGroupIcon';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 import { spacing } from '../theme/spacing';
-import { formatDateForDisplay, formatShortDay } from '../utils/date';
+import { addDays, formatDateForDisplay, formatShortDay, getWeekStart, todayDateKey } from '../utils/date';
 import { kgToLbs } from '../utils/number';
+import { getStrengthTier } from '../utils/strengthStandards';
+import { getMuscleGroup } from '../components/MuscleGroupIcon';
 
 type SessionRangePreset = '3' | '10' | '20' | 'custom';
 type ProgressViewMode = 'line' | 'bar' | 'table';
@@ -256,6 +259,118 @@ function SvgLineChart({ points, metric, unitPreference, maxValue }: {
   );
 }
 
+// ─── Training Heatmap ────────────────────────────────────────────
+const CELL = 10;
+const CELL_GAP = 2;
+const CELL_STRIDE = CELL + CELL_GAP;
+const HEATMAP_WEEKS = 52;
+const MONTH_LABEL_H = 16;
+
+function SvgHeatmap({ sessions }: { sessions: { date: string; type: WorkoutType }[] }) {
+  const dateMap = useMemo(() => {
+    const m = new Map<string, WorkoutType[]>();
+    for (const s of sessions) {
+      const arr = m.get(s.date) ?? [];
+      arr.push(s.type);
+      m.set(s.date, arr);
+    }
+    return m;
+  }, [sessions]);
+
+  const today = todayDateKey();
+  const currentWeekStart = getWeekStart(today);
+  const firstWeekStart = addDays(currentWeekStart, -(HEATMAP_WEEKS - 1) * 7);
+
+  const svgWidth = HEATMAP_WEEKS * CELL_STRIDE - CELL_GAP;
+  const svgHeight = MONTH_LABEL_H + 7 * CELL_STRIDE - CELL_GAP;
+
+  const cells: React.ReactElement[] = [];
+  const monthLabels: React.ReactElement[] = [];
+  let lastMonth = '';
+
+  for (let w = 0; w < HEATMAP_WEEKS; w++) {
+    const weekStart = addDays(firstWeekStart, w * 7);
+    const monthKey = weekStart.slice(0, 7);
+    if (monthKey !== lastMonth) {
+      const d = new Date(weekStart + 'T00:00:00');
+      const label = d.toLocaleDateString('en-US', { month: 'short' });
+      monthLabels.push(
+        <SvgText key={`m${w}`} x={w * CELL_STRIDE} y={MONTH_LABEL_H - 4}
+          fill={colors.textMuted} fontSize={8} fontWeight="600">{label}</SvgText>
+      );
+      lastMonth = monthKey;
+    }
+    for (let d = 0; d < 7; d++) {
+      const date = addDays(weekStart, d);
+      const types = dateMap.get(date) ?? [];
+      const hasUpper = types.includes('upper');
+      const hasLower = types.includes('lower');
+      const fill = hasUpper && hasLower ? colors.gold
+        : hasUpper ? colors.primary
+        : hasLower ? colors.accent
+        : colors.surfaceElevated;
+      cells.push(
+        <Rect key={`${w}-${d}`}
+          x={w * CELL_STRIDE} y={MONTH_LABEL_H + d * CELL_STRIDE}
+          width={CELL} height={CELL} rx={2} fill={fill} />
+      );
+    }
+  }
+
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.xs }}>
+      <Svg width={svgWidth} height={svgHeight}>
+        {monthLabels}
+        {cells}
+      </Svg>
+    </ScrollView>
+  );
+}
+
+// ─── Radar Chart ─────────────────────────────────────────────────
+const RADAR_SIZE = 180;
+const RADAR_R = 62;
+const RADAR_CX = RADAR_SIZE / 2;
+const RADAR_CY = RADAR_SIZE / 2 + 8;
+
+function SvgRadarChart({ push, pull, legs, core }: { push: number; pull: number; legs: number; core: number }) {
+  const guide = [0.25, 0.5, 0.75, 1].map((r) => {
+    const pr = r * RADAR_R;
+    return `${RADAR_CX},${RADAR_CY - pr} ${RADAR_CX + pr},${RADAR_CY} ${RADAR_CX},${RADAR_CY + pr} ${RADAR_CX - pr},${RADAR_CY}`;
+  });
+
+  const dataPoints = [
+    `${RADAR_CX},${RADAR_CY - push * RADAR_R}`,
+    `${RADAR_CX + pull * RADAR_R},${RADAR_CY}`,
+    `${RADAR_CX},${RADAR_CY + legs * RADAR_R}`,
+    `${RADAR_CX - core * RADAR_R},${RADAR_CY}`,
+  ].join(' ');
+
+  const LABEL_PAD = 14;
+  return (
+    <View style={{ alignItems: 'center' }}>
+      <Svg width={RADAR_SIZE} height={RADAR_SIZE}>
+        {/* Guide rings */}
+        {guide.map((pts, i) => (
+          <Polygon key={i} points={pts} fill="none" stroke={colors.border} strokeWidth={1} />
+        ))}
+        {/* Axes */}
+        <Line x1={RADAR_CX} y1={RADAR_CY} x2={RADAR_CX} y2={RADAR_CY - RADAR_R} stroke={colors.borderStrong} strokeWidth={1} />
+        <Line x1={RADAR_CX} y1={RADAR_CY} x2={RADAR_CX + RADAR_R} y2={RADAR_CY} stroke={colors.borderStrong} strokeWidth={1} />
+        <Line x1={RADAR_CX} y1={RADAR_CY} x2={RADAR_CX} y2={RADAR_CY + RADAR_R} stroke={colors.borderStrong} strokeWidth={1} />
+        <Line x1={RADAR_CX} y1={RADAR_CY} x2={RADAR_CX - RADAR_R} y2={RADAR_CY} stroke={colors.borderStrong} strokeWidth={1} />
+        {/* Filled area */}
+        <Polygon points={dataPoints} fill={colors.primaryMid} stroke={colors.primary} strokeWidth={1.5} />
+        {/* Axis labels */}
+        <SvgText x={RADAR_CX} y={RADAR_CY - RADAR_R - LABEL_PAD} textAnchor="middle" fill={colors.primary} fontSize={10} fontWeight="700">Push</SvgText>
+        <SvgText x={RADAR_CX + RADAR_R + LABEL_PAD} y={RADAR_CY + 4} textAnchor="start" fill={'#FF6BFF'} fontSize={10} fontWeight="700">Pull</SvgText>
+        <SvgText x={RADAR_CX} y={RADAR_CY + RADAR_R + LABEL_PAD + 4} textAnchor="middle" fill={colors.accent} fontSize={10} fontWeight="700">Legs</SvgText>
+        <SvgText x={RADAR_CX - RADAR_R - LABEL_PAD} y={RADAR_CY + 4} textAnchor="end" fill={colors.gold} fontSize={10} fontWeight="700">Core</SvgText>
+      </Svg>
+    </View>
+  );
+}
+
 // ─── Volume trend bar chart ───────────────────────────────────────
 function SvgVolumeBarChart({ points, unitPreference }: {
   points: WeeklyVolumeTrendPoint[];
@@ -328,22 +443,25 @@ export default function InsightsScreen() {
   const [recordsFilter, setRecordsFilter] = useState<WorkoutType>('upper');
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([]);
   const [volumeTrend, setVolumeTrend] = useState<WeeklyVolumeTrendPoint[]>([]);
+  const [heatmapData, setHeatmapData] = useState<{ date: string; type: WorkoutType }[]>([]);
 
   const loadSummary = useCallback(async () => {
     setPrimaryLoading(true);
     try {
-      const [weekly, settings, lastSync, prs, trend] = await Promise.all([
+      const [weekly, settings, lastSync, prs, trend, heatmap] = await Promise.all([
         getWeeklyInsights(7).catch(() => null),
         getSettings().catch(() => null),
         getLastCloudSyncAt().catch(() => null),
         getPersonalRecords().catch(() => []),
         getWeeklyVolumeTrend(8).catch(() => []),
+        getSessionHeatmapData().catch(() => []),
       ]);
       if (weekly !== null) setInsights(weekly);
       if (settings !== null) setUnitPreference(settings.unitPreference);
       setLastCloudSyncAt(lastSync ?? null);
       setPersonalRecords(prs as PersonalRecord[]);
       setVolumeTrend(trend as WeeklyVolumeTrendPoint[]);
+      setHeatmapData(heatmap as { date: string; type: WorkoutType }[]);
     } catch (err) { console.warn('loadSummary unexpected error:', err); }
     finally { setPrimaryLoading(false); }
   }, []);
@@ -422,6 +540,25 @@ export default function InsightsScreen() {
     return insights.totalSetCount / insights.workoutCount;
   }, [insights?.totalSetCount, insights?.workoutCount]);
 
+  const radarVolumes = useMemo(() => {
+    const cats = { push: 0, pull: 0, legs: 0, core: 0 };
+    for (const ex of insights?.exerciseInsights ?? []) {
+      const group = getMuscleGroup(ex.exerciseName);
+      if (group === 'chest' || group === 'shoulders' || group === 'triceps') cats.push += ex.totalLoadKg;
+      else if (group === 'back' || group === 'biceps') cats.pull += ex.totalLoadKg;
+      else if (group === 'quads' || group === 'hamstrings' || group === 'glutes' || group === 'calves') cats.legs += ex.totalLoadKg;
+      else if (group === 'core') cats.core += ex.totalLoadKg;
+    }
+    const max = Math.max(cats.push, cats.pull, cats.legs, cats.core, 1);
+    return {
+      push: cats.push / max,
+      pull: cats.pull / max,
+      legs: cats.legs / max,
+      core: cats.core / max,
+      hasSomeData: cats.push + cats.pull + cats.legs + cats.core > 0,
+    };
+  }, [insights?.exerciseInsights]);
+
   const filteredExerciseNames = useMemo(() => {
     const normalized = exerciseQuery.trim().toLowerCase();
     if (!normalized) return exerciseNames;
@@ -486,6 +623,26 @@ export default function InsightsScreen() {
                 centerLabel="sessions"
                 size={120}
               />
+            </Card>
+          ) : null}
+
+          {radarVolumes.hasSomeData ? (
+            <Card style={styles.cardGap}>
+              <Text style={styles.cardTitle}>Muscle balance · this week</Text>
+              <SvgRadarChart push={radarVolumes.push} pull={radarVolumes.pull} legs={radarVolumes.legs} core={radarVolumes.core} />
+              <Text style={styles.helperText}>Area shows volume share. An even shape means balanced training.</Text>
+            </Card>
+          ) : null}
+
+          {heatmapData.length > 0 ? (
+            <Card style={styles.cardGap}>
+              <Text style={styles.cardTitle}>Training history · last 52 weeks</Text>
+              <SvgHeatmap sessions={heatmapData} />
+              <View style={styles.heatmapLegend}>
+                <View style={[styles.heatmapDot, { backgroundColor: colors.primary }]} /><Text style={styles.helperText}>Upper  </Text>
+                <View style={[styles.heatmapDot, { backgroundColor: colors.accent }]} /><Text style={styles.helperText}>Lower  </Text>
+                <View style={[styles.heatmapDot, { backgroundColor: colors.gold }]} /><Text style={styles.helperText}>Both</Text>
+              </View>
             </Card>
           ) : null}
 
@@ -625,18 +782,28 @@ export default function InsightsScreen() {
           {personalRecords.filter((pr) => pr.workoutType === recordsFilter).length > 0 ? (
             personalRecords
               .filter((pr) => pr.workoutType === recordsFilter)
-              .map((pr, idx, arr) => (
-                <View key={pr.exerciseName} style={[styles.prRow, idx > 0 && styles.prRowBorder]}>
-                  <View style={styles.prLeft}>
-                    <Text style={styles.prName}>{pr.exerciseName}</Text>
-                    <Text style={styles.prMeta}>{formatDateForDisplay(pr.date)}</Text>
+              .map((pr, idx) => {
+                const tier = getStrengthTier(pr.exerciseName, pr.weightKg);
+                return (
+                  <View key={pr.exerciseName} style={[styles.prRow, idx > 0 && styles.prRowBorder]}>
+                    <View style={styles.prLeft}>
+                      <View style={styles.prNameRow}>
+                        <Text style={styles.prName}>{pr.exerciseName}</Text>
+                        {tier ? (
+                          <View style={[styles.tierBadge, { borderColor: tier.color + '40', backgroundColor: tier.color + '18' }]}>
+                            <Text style={[styles.tierText, { color: tier.color }]}>{tier.tier}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <Text style={styles.prMeta}>{formatDateForDisplay(pr.date)}</Text>
+                    </View>
+                    <View style={styles.prRight}>
+                      <Text style={styles.prWeight}>{toPreferredWeight(pr.weightKg, unitPreference).toFixed(1)} {unitPreference === 'kg' ? 'kg' : 'lbs'}</Text>
+                      <Text style={styles.prReps}>× {pr.reps}</Text>
+                    </View>
                   </View>
-                  <View style={styles.prRight}>
-                    <Text style={styles.prWeight}>{toPreferredWeight(pr.weightKg, unitPreference).toFixed(1)} {unitPreference === 'kg' ? 'kg' : 'lbs'}</Text>
-                    <Text style={styles.prReps}>× {pr.reps}</Text>
-                  </View>
-                </View>
-              ))
+                );
+              })
           ) : (
             <Text style={styles.helperText}>No {recordsFilter} records yet.</Text>
           )}
@@ -692,5 +859,10 @@ const styles = StyleSheet.create({
   prWeight: { fontSize: 16, fontFamily: fonts.monoBold, color: colors.primary },
   prReps: { fontSize: 13, fontFamily: fonts.semiBold, color: colors.textSecondary },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.xs },
+  heatmapLegend: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: spacing.xs },
+  heatmapDot: { width: 8, height: 8, borderRadius: 2 },
+  prNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+  tierBadge: { borderRadius: 6, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 2 },
+  tierText: { fontSize: 10, fontFamily: fonts.bold },
 });
 
